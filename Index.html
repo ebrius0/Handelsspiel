@@ -1,23 +1,65 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Handelsspiel V1</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Handelsspiel mit Minikarte</title>
   <style>
-    body { font-family: sans-serif; background: #f5f5dc; padding: 20px; }
-    h1 { color: #3e3e3e; }
-    button { margin: 5px; }
-    .stadt-button { margin: 2px; padding: 4px 8px; background: #d0d0d0; border: none; cursor: pointer; }
-    .stadt-button.active { background: #8fbc8f; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f1e1;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #333;
+    }
+    .karte {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+    .stadt-button {
+      background: linear-gradient(#8fbc8f, #6b8e6b);
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.3s;
+    }
+    .stadt-button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(#aaddaa, #7fbf7f);
+    }
+    .stadt-button.active {
+      border: 2px solid white;
+      box-shadow: 0 0 5px #fff;
+    }
+    .info-box {
+      margin: 10px 0;
+    }
+    button {
+      margin: 2px;
+    }
   </style>
 </head>
 <body>
-  <h1>📦 Handelsspiel V1</h1>
-  <div id="stadtwahl"></div>
-  <p>Aktuelle Stadt: <span id="stadt"></span></p>
-  <p>Gold: <span id="gold">100</span> | XP: <span id="xp">0</span> | Level: <span id="level">1</span></p>
-  <p>Lager: <span id="lagerstand">0</span>/50</p>
+  <h1>🗺️ Handelsspiel mit Minikarte</h1>
+
+  <div class="karte" id="stadtwahl"></div>
+
+  <div class="info-box">
+    <p><strong>Aktuelle Stadt:</strong> <span id="stadt"></span></p>
+    <p><strong>Gold:</strong> <span id="gold">100</span> |
+       <strong>XP:</strong> <span id="xp">0</span> |
+       <strong>Level:</strong> <span id="level">1</span></p>
+    <p><strong>Lager:</strong> <span id="lagerstand">0</span>/50</p>
+  </div>
+
   <div id="warenliste"></div>
 
   <script>
@@ -87,7 +129,6 @@
         const anzahl = lager[name] || 0;
         const einkauf = preis(w, "kaufen");
         const verkauf = preis(w, "verkaufen");
-
         const p = document.createElement("p");
         p.innerHTML = `<b>${name}</b> (Lager: ${anzahl})<br>
           <button onclick="kaufen('${name}', ${einkauf})">Kaufen (${einkauf} G)</button>
