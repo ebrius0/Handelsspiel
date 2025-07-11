@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handelsspiel V1</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5dc; padding: 20px; }
+    h1 { color: #3e3e3e; }
+    button { margin: 5px; }
+    .stadt-button { margin: 2px; padding: 4px 8px; background: #d0d0d0; border: none; cursor: pointer; }
+    .stadt-button.active { background: #8fbc8f; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>📦 Handelsspiel V1</h1>
+  <div id="stadtwahl"></div>
+  <p>Aktuelle Stadt: <span id="stadt"></span></p>
+  <p>Gold: <span id="gold">100</span> | XP: <span id="xp">0</span> | Level: <span id="level">1</span></p>
+  <p>Lager: <span id="lagerstand">0</span>/50</p>
+  <div id="warenliste"></div>
+
+  <script>
+    const waren = [
+      { name: "Brot", kategorie: "Nahrung" },
+      { name: "Fisch", kategorie: "Nahrung" },
+      { name: "Fleisch", kategorie: "Nahrung" },
+      { name: "Wein", kategorie: "Genussmittel" },
+      { name: "Bier", kategorie: "Genussmittel" },
+      { name: "Stein", kategorie: "Baumaterial" },
+      { name: "Holz", kategorie: "Baumaterial" },
+      { name: "Eisenwaren", kategorie: "Baumaterial" },
+      { name: "Käse", kategorie: "Nahrung" },
+      { name: "Äpfel", kategorie: "Nahrung" },
+      { name: "Honig", kategorie: "Genussmittel" },
+      { name: "Gewürze", kategorie: "Genussmittel" },
+      { name: "Tuch", kategorie: "Baumaterial" },
+      { name: "Werkzeuge", kategorie: "Baumaterial" },
+      { name: "Milch", kategorie: "Nahrung" },
+      { name: "Salz", kategorie: "Genussmittel" }
+    ];
+
+    const staedte = [
+      { name: "Hafenburg", spezial: "Nahrung" },
+      { name: "Flussfurt", spezial: "Genussmittel" },
+      { name: "Steinheim", spezial: "Baumaterial" },
+      { name: "Weinkrug", spezial: "Genussmittel" },
+      { name: "Holzwacht", spezial: "Baumaterial" },
+      { name: "Kornstedt", spezial: "Nahrung" },
+      { name: "Eisenfels", spezial: "Baumaterial" },
+      { name: "Goldborn", spezial: "Genussmittel" },
+      { name: "Fischhafen", spezial: "Nahrung" },
+      { name: "Tuchdorf", spezial: "Baumaterial" }
+    ];
+
+    let stadt = staedte[0];
+    let gold = 100;
+    let xp = 0;
+    let level = 1;
+    let lager = {};
+    let lagerkapazitaet = 50;
+
+    function updateUI() {
+      document.getElementById("stadt").textContent = stadt.name;
+      document.getElementById("gold").textContent = gold;
+      document.getElementById("xp").textContent = xp;
+      document.getElementById("level").textContent = level;
+      const total = Object.values(lager).reduce((a, b) => a + b, 0);
+      document.getElementById("lagerstand").textContent = `${total}/${lagerkapazitaet}`;
+    }
+
+    function preis(w, art) {
+      let basis = 10;
+      if (stadt.spezial === w.kategorie) {
+        basis += (art === "kaufen" ? -3 : 3);
+      } else {
+        basis += (art === "kaufen" ? 2 : -2);
+      }
+      return basis;
+    }
+
+    function renderWaren() {
+      const div = document.getElementById("warenliste");
+      div.innerHTML = "";
+      waren.forEach(w => {
+        const name = w.name;
+        const anzahl = lager[name] || 0;
+        const einkauf = preis(w, "kaufen");
+        const verkauf = preis(w, "verkaufen");
+
+        const p = document.createElement("p");
+        p.innerHTML = `<b>${name}</b> (Lager: ${anzahl})<br>
+          <button onclick="kaufen('${name}', ${einkauf})">Kaufen (${einkauf} G)</button>
+          <button onclick="verkaufen('${name}', ${verkauf})">Verkaufen (${verkauf} G)</button>`;
+        div.appendChild(p);
+      });
+    }
+
+    function kaufen(name, preis) {
+      const total = Object.values(lager).reduce((a, b) => a + b, 0);
+      if (gold >= preis && total < lagerkapazitaet) {
+        gold -= preis;
+        lager[name] = (lager[name] || 0) + 1;
+        renderWaren();
+        updateUI();
+      }
+    }
+
+    function verkaufen(name, preis) {
+      if ((lager[name] || 0) > 0) {
+        gold += preis;
+        lager[name] -= 1;
+        xp += preis;
+        if (xp >= level * 100) {
+          level++;
+        }
+        renderWaren();
+        updateUI();
+      }
+    }
+
+    function stadtWechsel(index) {
+      stadt = staedte[index];
+      renderWaren();
+      updateUI();
+      Array.from(document.querySelectorAll('.stadt-button')).forEach(b => b.classList.remove('active'));
+      document.getElementById("stadtbtn" + index).classList.add("active");
+    }
+
+    function initStadtwahl() {
+      const div = document.getElementById("stadtwahl");
+      staedte.forEach((s, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = s.name;
+        btn.className = "stadt-button";
+        btn.id = "stadtbtn" + i;
+        btn.onclick = () => stadtWechsel(i);
+        div.appendChild(btn);
+      });
+      stadtWechsel(0);
+    }
+
+    window.onload = () => {
+      initStadtwahl();
+    };
+  </script>
+</body>
+</html>
