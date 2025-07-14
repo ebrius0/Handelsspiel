@@ -3,259 +3,263 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Handelsspiel – Elandor</title>
+  <title>Elandor – Handelsspiel</title>
   <style>
     body {
       margin: 0;
       font-family: "Georgia", serif;
       background: #f5f0e6;
     }
-    .menu-toggle {
-      position: fixed;
-      top: 60px;
-      left: 10px;
-      z-index: 1001;
-      background: #5c432d;
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .sidebar {
-      position: fixed;
-      top: 50px;
-      left: 0;
-      width: 220px;
-      height: 100%;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/4/45/Parchment_texture.jpg');
+
+    /* Oberes Menü mit Schiffsplanken-Design */
+    .top-menu {
+      display: flex;
+      justify-content: center;
+      background: url('https://i.imgur.com/W5D7gBk.jpg'); /* Holztextur */
       background-size: cover;
-      padding: 20px;
-      transform: translateX(-100%);
-      transition: transform 0.4s ease-in-out;
-      box-shadow: 3px 0 6px rgba(0,0,0,0.2);
-      z-index: 1000;
-    }
-    .sidebar.open {
-      transform: translateX(0);
-    }
-    .menu-button {
-      display: block;
-      margin: 12px 0;
       padding: 10px;
-      background: #f0e3b4;
-      border: 1px solid #9d8458;
-      border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .menu-button {
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid #654321;
+      margin: 0 10px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
       cursor: pointer;
-      text-align: center;
+      font-size: 16px;
+      transition: 0.2s;
     }
-    .map-container {
-      margin-left: 0;
-      transition: margin-left 0.4s;
-      text-align: center;
-      padding-top: 70px;
+
+    .menu-button:hover {
+      background: #e2c9a0;
     }
-    .sidebar.open ~ .map-container {
-      margin-left: 220px;
-    }
-    svg {
-      width: 90%;
-      height: auto;
-      border: 1px solid #aaa;
-      background-color: #f8f5e4;
-    }
-    .city {
-      fill: #2a5caa;
-      cursor: pointer;
-      stroke: #000;
-      stroke-width: 0.5;
-    }
-    .city:hover {
-      fill: #e04b00;
-    }
-    .city-label {
-      font-size: 12px;
-      pointer-events: none;
-    }
+
     .status-bar {
       text-align: center;
       background: #dacaa2;
       padding: 10px;
       font-weight: bold;
     }
+
+    .map-container {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    svg {
+      width: 90%;
+      height: auto;
+      border: 1px solid #aaa;
+      background-color: #f8f5e4;
+    }
+
+    .city {
+      fill: #2a5caa;
+      cursor: pointer;
+      stroke: #000;
+      stroke-width: 0.5;
+    }
+
+    .city:hover {
+      fill: #e04b00;
+    }
+
+    .city-label {
+      font-size: 12px;
+      pointer-events: none;
+    }
+
     #content {
       text-align: center;
-      margin: 20px auto;
+      margin: 10px auto 40px auto;
       width: 90%;
     }
+
     table {
       margin: 10px auto;
       width: 100%;
       border-collapse: collapse;
       background: #fff8e1;
     }
+
     th, td {
       border: 1px solid #aaa;
       padding: 6px;
       font-size: 14px;
     }
+
     th {
       background: #ddd2b4;
     }
   </style>
 </head>
 <body>
-  <button class="menu-toggle" onclick="toggleMenu()">☰ Menü</button>
-  <div class="sidebar" id="sidebar">
-    <div class="menu-button" onclick="setView('overview')">Übersicht</div>
-    <div class="menu-button" onclick="setView('trade')">Handel</div>
-    <div class="menu-button" onclick="setView('buildings')">Gebäude</div>
-    <div class="menu-button" onclick="setView('ships')">Schiffe</div>
-  </div>
-  <div class="status-bar" id="statusBar">
-    Gold: 1000 | XP: 0 | Lager: 0/100
-  </div>
-  <div class="map-container">
-    <h2>Karte von Elandor</h2>
-    <svg viewBox="0 0 800 500">
-      <circle class="city" cx="100" cy="80" r="7" onclick="selectCity('Velmor')" />
-      <text x="110" y="85" class="city-label">Velmor</text>
 
-      <circle class="city" cx="180" cy="150" r="7" onclick="selectCity('Aelstrand')" />
-      <text x="190" y="155" class="city-label">Aelstrand</text>
+<!-- Audio für Holzklopf-Sound -->
+<audio id="woodSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2a9276319f.mp3?filename=wood-knock-14545.mp3" preload="auto"></audio>
 
-      <circle class="city" cx="240" cy="220" r="7" onclick="selectCity('Dornhafen')" />
-      <text x="250" y="225" class="city-label">Dornhafen</text>
+<!-- Menü oben -->
+<div class="top-menu">
+  <button class="menu-button" onclick="setView('overview')">Übersicht</button>
+  <button class="menu-button" onclick="setView('trade')">Handel</button>
+  <button class="menu-button" onclick="setView('buildings')">Gebäude</button>
+  <button class="menu-button" onclick="setView('ships')">Schiffe</button>
+</div>
 
-      <circle class="city" cx="350" cy="100" r="7" onclick="selectCity('Narwyn')" />
-      <text x="360" y="105" class="city-label">Narwyn</text>
+<div class="status-bar" id="statusBar">
+  Gold: 1000 | XP: 0 | Lager: 0/100
+</div>
 
-      <circle class="city" cx="400" cy="170" r="7" onclick="selectCity('Eisfurt')" />
-      <text x="410" y="175" class="city-label">Eisfurt</text>
+<div class="map-container">
+  <h2>Karte von Elandor</h2>
+  <svg viewBox="0 0 800 500">
+    <circle class="city" cx="100" cy="80" r="7" onclick="selectCity('Velmor')" />
+    <text x="110" y="85" class="city-label">Velmor</text>
 
-      <circle class="city" cx="500" cy="200" r="7" onclick="selectCity('Goldquell')" />
-      <text x="510" y="205" class="city-label">Goldquell</text>
-    </svg>
-  </div>
+    <circle class="city" cx="180" cy="150" r="7" onclick="selectCity('Aelstrand')" />
+    <text x="190" y="155" class="city-label">Aelstrand</text>
 
-  <div id="content">
-    <h3 id="cityName">Keine Stadt ausgewählt</h3>
-    <div id="viewArea">Bitte wähle eine Stadt.</div>
-  </div>
+    <circle class="city" cx="240" cy="220" r="7" onclick="selectCity('Dornhafen')" />
+    <text x="250" y="225" class="city-label">Dornhafen</text>
 
-  <script>
-    const statusBar = document.getElementById('statusBar');
-    const viewArea = document.getElementById('viewArea');
-    const cityName = document.getElementById('cityName');
-    let currentCity = null;
-    let currentView = "overview";
+    <circle class="city" cx="350" cy="100" r="7" onclick="selectCity('Narwyn')" />
+    <text x="360" y="105" class="city-label">Narwyn</text>
 
-    const player = {
-      gold: 1000,
-      xp: 0,
-      capacity: 100,
-      inventory: {},
-    };
+    <circle class="city" cx="400" cy="170" r="7" onclick="selectCity('Eisfurt')" />
+    <text x="410" y="175" class="city-label">Eisfurt</text>
 
-    const goods = ["Brot", "Fisch", "Fleisch", "Bier", "Wein", "Holz", "Stein"];
+    <circle class="city" cx="500" cy="200" r="7" onclick="selectCity('Goldquell')" />
+    <text x="510" y="205" class="city-label">Goldquell</text>
+  </svg>
+</div>
 
-    const cities = {
-      Velmor: { population: 3000 },
-      Aelstrand: { population: 2800 },
-      Dornhafen: { population: 3500 },
-      Narwyn: { population: 2700 },
-      Eisfurt: { population: 4000 },
-      Goldquell: { population: 2500 },
-    };
+<div id="content">
+  <h3 id="cityName">Keine Stadt ausgewählt</h3>
+  <div id="viewArea">Bitte wähle eine Stadt.</div>
+</div>
 
-    for (const city in cities) {
-      cities[city].stock = {};
-      goods.forEach(g => {
-        cities[city].stock[g] = {
-          amount: Math.floor(Math.random() * 60 + 20),
-          price: Math.floor(Math.random() * 40 + 20),
-        };
-      });
+<script>
+  const statusBar = document.getElementById('statusBar');
+  const viewArea = document.getElementById('viewArea');
+  const cityName = document.getElementById('cityName');
+  const sound = document.getElementById('woodSound');
+  let currentCity = null;
+  let currentView = "overview";
+
+  const player = {
+    gold: 1000,
+    xp: 0,
+    capacity: 100,
+    inventory: {},
+  };
+
+  const goods = ["Brot", "Fisch", "Fleisch", "Bier", "Wein", "Holz", "Stein"];
+
+  const cities = {
+    Velmor: { population: 3000 },
+    Aelstrand: { population: 2800 },
+    Dornhafen: { population: 3500 },
+    Narwyn: { population: 2700 },
+    Eisfurt: { population: 4000 },
+    Goldquell: { population: 2500 },
+  };
+
+  for (const city in cities) {
+    cities[city].stock = {};
+    goods.forEach(g => {
+      cities[city].stock[g] = {
+        amount: Math.floor(Math.random() * 60 + 20),
+        price: Math.floor(Math.random() * 40 + 20),
+      };
+    });
+  }
+
+  function playSound() {
+    sound.currentTime = 0;
+    sound.play();
+  }
+
+  document.querySelectorAll('.menu-button').forEach(btn => {
+    btn.addEventListener('click', playSound);
+  });
+
+  function updateStatus() {
+    const total = Object.values(player.inventory).reduce((sum, a) => sum + a, 0);
+    statusBar.innerText = `Gold: ${player.gold} | XP: ${player.xp} | Lager: ${total}/${player.capacity}`;
+  }
+
+  function setView(view) {
+    currentView = view;
+    renderView();
+  }
+
+  function selectCity(city) {
+    currentCity = city;
+    cityName.innerText = `Stadt: ${city}`;
+    renderView();
+  }
+
+  function renderView() {
+    if (!currentCity) {
+      viewArea.innerHTML = "Bitte wähle eine Stadt auf der Karte.";
+      return;
     }
 
-    function toggleMenu() {
-      document.getElementById('sidebar').classList.toggle('open');
-    }
-
-    function updateStatus() {
-      const total = Object.values(player.inventory).reduce((sum, a) => sum + a, 0);
-      statusBar.innerText = `Gold: ${player.gold} | XP: ${player.xp} | Lager: ${total}/${player.capacity}`;
-    }
-
-    function setView(view) {
-      currentView = view;
-      renderView();
-    }
-
-    function selectCity(city) {
-      currentCity = city;
-      cityName.innerText = `Stadt: ${city}`;
-      renderView();
-    }
-
-    function renderView() {
-      if (!currentCity) {
-        viewArea.innerHTML = "Bitte wähle eine Stadt auf der Karte.";
-        return;
+    if (currentView === "overview") {
+      const pop = cities[currentCity].population;
+      viewArea.innerHTML = `<p>Einwohnerzahl: ${pop}</p>`;
+    } else if (currentView === "trade") {
+      let html = `<table><tr><th>Ware</th><th>Menge</th><th>Preis</th><th>Kaufen</th><th>Verkaufen</th></tr>`;
+      for (const g of goods) {
+        const item = cities[currentCity].stock[g];
+        html += `<tr>
+          <td>${g}</td>
+          <td>${item.amount}</td>
+          <td>${item.price}g</td>
+          <td><button onclick="buy('${currentCity}','${g}')">+</button></td>
+          <td><button onclick="sell('${currentCity}','${g}')">–</button></td>
+        </tr>`;
       }
-      if (currentView === "overview") {
-        const pop = cities[currentCity].population;
-        viewArea.innerHTML = `<p>Einwohnerzahl: ${pop}</p>`;
-      } else if (currentView === "trade") {
-        let html = `<table><tr><th>Ware</th><th>Menge</th><th>Preis</th><th>Kaufen</th><th>Verkaufen</th></tr>`;
-        for (const g of goods) {
-          const item = cities[currentCity].stock[g];
-          html += `<tr>
-            <td>${g}</td>
-            <td>${item.amount}</td>
-            <td>${item.price}g</td>
-            <td><button onclick="buy('${currentCity}','${g}')">+</button></td>
-            <td><button onclick="sell('${currentCity}','${g}')">–</button></td>
-          </tr>`;
-        }
-        html += `</table>`;
-        viewArea.innerHTML = html;
-      } else if (currentView === "buildings") {
-        viewArea.innerHTML = "<p>Gebäudeübersicht folgt...</p>";
-      } else if (currentView === "ships") {
-        viewArea.innerHTML = "<p>Werft & Schiffe folgen...</p>";
-      }
+      html += `</table>`;
+      viewArea.innerHTML = html;
+    } else if (currentView === "buildings") {
+      viewArea.innerHTML = "<p>Gebäudeübersicht folgt...</p>";
+    } else if (currentView === "ships") {
+      viewArea.innerHTML = "<p>Werft & Schiffe folgen...</p>";
     }
+  }
 
-    function buy(city, good) {
-      const item = cities[city].stock[good];
-      if (player.gold >= item.price && item.amount > 0) {
-        const total = Object.values(player.inventory).reduce((a, b) => a + b, 0);
-        if (total < player.capacity) {
-          player.gold -= item.price;
-          item.amount--;
-          player.inventory[good] = (player.inventory[good] || 0) + 1;
-          player.xp += Math.floor(item.price / 10);
-          updateStatus();
-          renderView();
-        }
-      }
-    }
-
-    function sell(city, good) {
-      const item = cities[city].stock[good];
-      if ((player.inventory[good] || 0) > 0) {
-        player.inventory[good]--;
-        item.amount++;
-        player.gold += item.price;
+  function buy(city, good) {
+    const item = cities[city].stock[good];
+    if (player.gold >= item.price && item.amount > 0) {
+      const total = Object.values(player.inventory).reduce((a, b) => a + b, 0);
+      if (total < player.capacity) {
+        player.gold -= item.price;
+        item.amount--;
+        player.inventory[good] = (player.inventory[good] || 0) + 1;
         player.xp += Math.floor(item.price / 10);
         updateStatus();
         renderView();
       }
     }
+  }
 
-    updateStatus();
-  </script>
+  function sell(city, good) {
+    const item = cities[city].stock[good];
+    if ((player.inventory[good] || 0) > 0) {
+      player.inventory[good]--;
+      item.amount++;
+      player.gold += item.price;
+      player.xp += Math.floor(item.price / 10);
+      updateStatus();
+      renderView();
+    }
+  }
+
+  updateStatus();
+</script>
 </body>
 </html>
