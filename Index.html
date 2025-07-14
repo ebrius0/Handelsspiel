@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Elandor – Handelsspiel</title>
   <style>
     body {
@@ -11,14 +11,13 @@
       background: #f5f0e6;
     }
 
-    /* Oberes Menü mit Schiffsplanken-Design */
     .top-menu {
       display: flex;
       justify-content: center;
-      background: url('https://i.imgur.com/W5D7gBk.jpg'); /* Holztextur */
+      background: url('https://i.imgur.com/W5D7gBk.jpg');
       background-size: cover;
       padding: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
 
     .menu-button {
@@ -97,169 +96,185 @@
   </style>
 </head>
 <body>
+  <audio id="woodSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2a9276319f.mp3?filename=wood-knock-14545.mp3" preload="auto"></audio>
+  <div class="top-menu">
+    <button class="menu-button" onclick="setView('overview')">Übersicht</button>
+    <button class="menu-button" onclick="setView('trade')">Handel</button>
+    <button class="menu-button" onclick="setView('buildings')">Gebäude</button>
+    <button class="menu-button" onclick="setView('ships')">Schiffe</button>
+  </div>
 
-<!-- Audio für Holzklopf-Sound -->
-<audio id="woodSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2a9276319f.mp3?filename=wood-knock-14545.mp3" preload="auto"></audio>
+  <div class="status-bar" id="statusBar">Gold: 1000 | XP: 0 | Lager: 0/100</div>
 
-<!-- Menü oben -->
-<div class="top-menu">
-  <button class="menu-button" onclick="setView('overview')">Übersicht</button>
-  <button class="menu-button" onclick="setView('trade')">Handel</button>
-  <button class="menu-button" onclick="setView('buildings')">Gebäude</button>
-  <button class="menu-button" onclick="setView('ships')">Schiffe</button>
-</div>
+  <div class="map-container">
+    <h2>Karte von Elandor</h2>
+    <svg viewBox="0 0 800 500">
+      <circle class="city" cx="100" cy="80" r="7" onclick="selectCity('Velmor')" />
+      <text x="110" y="85" class="city-label">Velmor</text>
+      <circle class="city" cx="180" cy="150" r="7" onclick="selectCity('Aelstrand')" />
+      <text x="190" y="155" class="city-label">Aelstrand</text>
+      <circle class="city" cx="240" cy="220" r="7" onclick="selectCity('Dornhafen')" />
+      <text x="250" y="225" class="city-label">Dornhafen</text>
+      <circle class="city" cx="350" cy="100" r="7" onclick="selectCity('Narwyn')" />
+      <text x="360" y="105" class="city-label">Narwyn</text>
+      <circle class="city" cx="400" cy="170" r="7" onclick="selectCity('Eisfurt')" />
+      <text x="410" y="175" class="city-label">Eisfurt</text>
+      <circle class="city" cx="500" cy="200" r="7" onclick="selectCity('Goldquell')" />
+      <text x="510" y="205" class="city-label">Goldquell</text>
+    </svg>
+  </div>
 
-<div class="status-bar" id="statusBar">
-  Gold: 1000 | XP: 0 | Lager: 0/100
-</div>
+  <div id="content">
+    <h3 id="cityName">Keine Stadt ausgewählt</h3>
+    <div id="viewArea">Bitte wähle eine Stadt.</div>
+  </div>
 
-<div class="map-container">
-  <h2>Karte von Elandor</h2>
-  <svg viewBox="0 0 800 500">
-    <circle class="city" cx="100" cy="80" r="7" onclick="selectCity('Velmor')" />
-    <text x="110" y="85" class="city-label">Velmor</text>
+  <script>
+    const statusBar = document.getElementById('statusBar');
+    const viewArea = document.getElementById('viewArea');
+    const cityName = document.getElementById('cityName');
+    const sound = document.getElementById('woodSound');
+    const currentSeason = "Sommer"; // Dummy-Saison
+    let currentCity = null;
+    let currentView = "overview";
 
-    <circle class="city" cx="180" cy="150" r="7" onclick="selectCity('Aelstrand')" />
-    <text x="190" y="155" class="city-label">Aelstrand</text>
+    const player = {
+      gold: 1000,
+      xp: 0,
+      capacity: 100,
+      inventory: {},
+    };
 
-    <circle class="city" cx="240" cy="220" r="7" onclick="selectCity('Dornhafen')" />
-    <text x="250" y="225" class="city-label">Dornhafen</text>
+    const goods = ["Brot", "Fisch", "Fleisch", "Bier", "Wein", "Holz", "Stein"];
 
-    <circle class="city" cx="350" cy="100" r="7" onclick="selectCity('Narwyn')" />
-    <text x="360" y="105" class="city-label">Narwyn</text>
+    const cities = {
+      Velmor: { stock: {}, buildings: { lager: 1, kontor: 1 } },
+      Aelstrand: { stock: {}, buildings: { lager: 1, kontor: 0 } },
+      Dornhafen: { stock: {}, buildings: { lager: 2, kontor: 0 } },
+      Narwyn: { stock: {}, buildings: { lager: 0, kontor: 1 } },
+      Eisfurt: { stock: {}, buildings: { lager: 2, kontor: 1 } },
+      Goldquell: { stock: {}, buildings: { lager: 1, kontor: 0 } },
+    };
 
-    <circle class="city" cx="400" cy="170" r="7" onclick="selectCity('Eisfurt')" />
-    <text x="410" y="175" class="city-label">Eisfurt</text>
+    for (const city in cities) {
+      goods.forEach(g => {
+        cities[city].stock[g] = {
+          amount: Math.floor(Math.random() * 60 + 20),
+          price: Math.floor(Math.random() * 40 + 20),
+        };
+      });
+    }
 
-    <circle class="city" cx="500" cy="200" r="7" onclick="selectCity('Goldquell')" />
-    <text x="510" y="205" class="city-label">Goldquell</text>
-  </svg>
-</div>
+    function playSound() {
+      sound.currentTime = 0;
+      sound.play();
+    }
 
-<div id="content">
-  <h3 id="cityName">Keine Stadt ausgewählt</h3>
-  <div id="viewArea">Bitte wähle eine Stadt.</div>
-</div>
-
-<script>
-  const statusBar = document.getElementById('statusBar');
-  const viewArea = document.getElementById('viewArea');
-  const cityName = document.getElementById('cityName');
-  const sound = document.getElementById('woodSound');
-  let currentCity = null;
-  let currentView = "overview";
-
-  const player = {
-    gold: 1000,
-    xp: 0,
-    capacity: 100,
-    inventory: {},
-  };
-
-  const goods = ["Brot", "Fisch", "Fleisch", "Bier", "Wein", "Holz", "Stein"];
-
-  const cities = {
-    Velmor: { population: 3000 },
-    Aelstrand: { population: 2800 },
-    Dornhafen: { population: 3500 },
-    Narwyn: { population: 2700 },
-    Eisfurt: { population: 4000 },
-    Goldquell: { population: 2500 },
-  };
-
-  for (const city in cities) {
-    cities[city].stock = {};
-    goods.forEach(g => {
-      cities[city].stock[g] = {
-        amount: Math.floor(Math.random() * 60 + 20),
-        price: Math.floor(Math.random() * 40 + 20),
-      };
+    document.querySelectorAll('.menu-button').forEach(btn => {
+      btn.addEventListener('click', playSound);
     });
-  }
 
-  function playSound() {
-    sound.currentTime = 0;
-    sound.play();
-  }
-
-  document.querySelectorAll('.menu-button').forEach(btn => {
-    btn.addEventListener('click', playSound);
-  });
-
-  function updateStatus() {
-    const total = Object.values(player.inventory).reduce((sum, a) => sum + a, 0);
-    statusBar.innerText = `Gold: ${player.gold} | XP: ${player.xp} | Lager: ${total}/${player.capacity}`;
-  }
-
-  function setView(view) {
-    currentView = view;
-    renderView();
-  }
-
-  function selectCity(city) {
-    currentCity = city;
-    cityName.innerText = `Stadt: ${city}`;
-    renderView();
-  }
-
-  function renderView() {
-    if (!currentCity) {
-      viewArea.innerHTML = "Bitte wähle eine Stadt auf der Karte.";
-      return;
+    function updateStatus() {
+      const total = Object.values(player.inventory).reduce((sum, a) => sum + a, 0);
+      statusBar.innerText = `Gold: ${player.gold} | XP: ${player.xp} | Lager: ${total}/${player.capacity}`;
     }
 
-    if (currentView === "overview") {
-      const pop = cities[currentCity].population;
-      viewArea.innerHTML = `<p>Einwohnerzahl: ${pop}</p>`;
-    } else if (currentView === "trade") {
-      let html = `<table><tr><th>Ware</th><th>Menge</th><th>Preis</th><th>Kaufen</th><th>Verkaufen</th></tr>`;
-      for (const g of goods) {
-        const item = cities[currentCity].stock[g];
-        html += `<tr>
-          <td>${g}</td>
-          <td>${item.amount}</td>
-          <td>${item.price}g</td>
-          <td><button onclick="buy('${currentCity}','${g}')">+</button></td>
-          <td><button onclick="sell('${currentCity}','${g}')">–</button></td>
-        </tr>`;
+    function setView(view) {
+      currentView = view;
+      renderView();
+    }
+
+    function selectCity(city) {
+      currentCity = city;
+      cityName.innerText = `Stadt: ${city}`;
+      renderView();
+    }
+
+    function calculatePopulation(city) {
+      const stock = city.stock;
+      const food = ["Brot", "Fisch", "Fleisch"];
+      const luxury = ["Bier", "Wein"];
+      const seasonMultiplier = currentSeason === "Winter" ? 0.85 : 1;
+
+      const foodAmount = food.reduce((sum, item) => sum + (stock[item]?.amount || 0), 0);
+      const luxuryAmount = luxury.reduce((sum, item) => sum + (stock[item]?.amount || 0), 0);
+      const variety = Object.keys(stock).filter(k => stock[k].amount > 0).length;
+
+      const buildings = city.buildings || { lager: 0, kontor: 0 };
+      const buildingBonus = buildings.lager * 100 + buildings.kontor * 150;
+
+      let base = 1500;
+      let calculated = base + foodAmount * 5 + luxuryAmount * 2 + variety * 10 + buildingBonus;
+
+      calculated = calculated * seasonMultiplier;
+      return Math.floor(calculated);
+    }
+
+    function renderView() {
+      if (!currentCity) {
+        viewArea.innerHTML = "Bitte wähle eine Stadt auf der Karte.";
+        return;
       }
-      html += `</table>`;
-      viewArea.innerHTML = html;
-    } else if (currentView === "buildings") {
-      viewArea.innerHTML = "<p>Gebäudeübersicht folgt...</p>";
-    } else if (currentView === "ships") {
-      viewArea.innerHTML = "<p>Werft & Schiffe folgen...</p>";
-    }
-  }
 
-  function buy(city, good) {
-    const item = cities[city].stock[good];
-    if (player.gold >= item.price && item.amount > 0) {
-      const total = Object.values(player.inventory).reduce((a, b) => a + b, 0);
-      if (total < player.capacity) {
-        player.gold -= item.price;
-        item.amount--;
-        player.inventory[good] = (player.inventory[good] || 0) + 1;
+      const city = cities[currentCity];
+      const pop = calculatePopulation(city);
+
+      if (currentView === "overview") {
+        viewArea.innerHTML = `
+          <p>Einwohnerzahl (dynamisch): ${pop}</p>
+          <p>Versorgte Nahrungsarten: Brot, Fisch, Fleisch</p>
+          <p>Luxusgüter: Bier, Wein</p>
+          <p>Gebäude: Lager x${city.buildings?.lager || 0}, Kontor x${city.buildings?.kontor || 0}</p>
+        `;
+      } else if (currentView === "trade") {
+        let html = `<table><tr><th>Ware</th><th>Menge</th><th>Preis</th><th>Kaufen</th><th>Verkaufen</th></tr>`;
+        for (const g of goods) {
+          const item = city.stock[g];
+          html += `<tr>
+            <td>${g}</td>
+            <td>${item.amount}</td>
+            <td>${item.price}g</td>
+            <td><button onclick="buy('${currentCity}','${g}')">+</button></td>
+            <td><button onclick="sell('${currentCity}','${g}')">–</button></td>
+          </tr>`;
+        }
+        html += `</table>`;
+        viewArea.innerHTML = html;
+      } else if (currentView === "buildings") {
+        viewArea.innerHTML = "<p>Gebäudeübersicht folgt...</p>";
+      } else if (currentView === "ships") {
+        viewArea.innerHTML = "<p>Werft & Schiffe folgen...</p>";
+      }
+    }
+
+    function buy(city, good) {
+      const item = cities[city].stock[good];
+      if (player.gold >= item.price && item.amount > 0) {
+        const total = Object.values(player.inventory).reduce((a, b) => a + b, 0);
+        if (total < player.capacity) {
+          player.gold -= item.price;
+          item.amount--;
+          player.inventory[good] = (player.inventory[good] || 0) + 1;
+          player.xp += Math.floor(item.price / 10);
+          updateStatus();
+          renderView();
+        }
+      }
+    }
+
+    function sell(city, good) {
+      const item = cities[city].stock[good];
+      if ((player.inventory[good] || 0) > 0) {
+        player.inventory[good]--;
+        item.amount++;
+        player.gold += item.price;
         player.xp += Math.floor(item.price / 10);
         updateStatus();
         renderView();
       }
     }
-  }
 
-  function sell(city, good) {
-    const item = cities[city].stock[good];
-    if ((player.inventory[good] || 0) > 0) {
-      player.inventory[good]--;
-      item.amount++;
-      player.gold += item.price;
-      player.xp += Math.floor(item.price / 10);
-      updateStatus();
-      renderView();
-    }
-  }
-
-  updateStatus();
-</script>
+    updateStatus();
+  </script>
 </body>
 </html>
