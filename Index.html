@@ -1,108 +1,141 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Handelsspiel – Elandor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Handelsspiel Elandor</title>
   <style>
     body {
       margin: 0;
       font-family: 'Georgia', serif;
-      background-color: #f4f0e6;
+      background-color: #f3f0e0;
     }
 
-    /* Menüleiste */
-    .menu {
-      background-color: #d2b48c;
+    /* Menü-Design */
+    #menu {
+      background-image: url('https://i.imgur.com/nfBl4MP.png'); /* Beispiel: Holzplanken */
+      background-size: cover;
+      padding: 10px;
       display: flex;
       justify-content: center;
-      padding: 10px;
-      border-bottom: 3px solid #5c4326;
+      gap: 15px;
+      border-bottom: 3px solid #6d4c41;
     }
 
-    .menu button {
-      background: #e0c097;
-      border: 2px solid #5c4326;
-      margin: 0 10px;
+    .menu-button {
+      background: rgba(255, 248, 220, 0.8);
+      border: 2px solid #8b5a2b;
       padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .menu button:hover {
-      background-color: #d4b179;
-    }
-
-    /* Kartenanzeige */
-    .map-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .map-container img {
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      border: 4px solid #5c4326;
-      border-radius: 8px;
-    }
-
-    /* Infobereich */
-    #stadtInfo {
-      max-width: 1000px;
-      margin: 20px auto;
-      background-color: #fff8e1;
-      padding: 20px;
-      border: 2px solid #c2a76d;
-      border-radius: 8px;
       font-size: 18px;
-      display: none;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .menu-button:hover {
+      background: #deb887;
+    }
+
+    #map-container {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    #map {
+      width: 90%;
+      max-width: 1000px;
+      border: 3px solid #444;
+    }
+
+    #stadtinfo {
+      margin: 20px auto;
+      padding: 15px;
+      max-width: 800px;
+      background: #fffdf6;
+      border: 2px solid #a1887f;
+      border-radius: 10px;
+    }
+
+    .stadtname {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #5d4037;
+    }
+
+    .stadtinhalt {
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
 
+  <!-- Soundeffekt -->
+  <audio id="button-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_61f5f9a6f7.mp3"></audio>
+
   <!-- Menü -->
-  <div class="menu">
-    <button onclick="zeigeMenü('übersicht')">Übersicht</button>
-    <button onclick="zeigeMenü('handel')">Handel</button>
-    <button onclick="zeigeMenü('gebäude')">Gebäude</button>
-    <button onclick="zeigeMenü('schiffe')">Schiffe</button>
+  <div id="menu">
+    <button class="menu-button" onclick="playSound()">Übersicht</button>
+    <button class="menu-button" onclick="playSound()">Handel</button>
+    <button class="menu-button" onclick="playSound()">Gebäude</button>
+    <button class="menu-button" onclick="playSound()">Schiffe</button>
   </div>
 
   <!-- Karte -->
-  <div class="map-container">
-    <img src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" alt="Karte von Elandor">
-    <p style="margin-top:10px;">Die Welt von <strong>Elandor</strong> – Wähle eine Stadt aus, um Informationen anzuzeigen.</p>
+  <div id="map-container">
+    <img id="map" src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" usemap="#elandormap" alt="Karte von Elandor">
+    
+    <!-- Stadtbereiche (vereinfacht) -->
+    <map name="elandormap">
+      <area shape="circle" coords="250,150,15" href="#" alt="Stadt 1" onclick="zeigeStadt('Küstenstadt A')">
+      <area shape="circle" coords="400,120,15" href="#" alt="Stadt 2" onclick="zeigeStadt('Küstenstadt B')">
+      <area shape="circle" coords="600,180,15" href="#" alt="Stadt 3" onclick="zeigeStadt('Inselstadt')">
+      <area shape="circle" coords="350,300,15" href="#" alt="Stadt 4" onclick="zeigeStadt('Flussstadt C')">
+      <area shape="circle" coords="500,400,15" href="#" alt="Stadt 5" onclick="zeigeStadt('Küstenstadt D')">
+      <area shape="circle" coords="200,250,15" href="#" alt="Stadt 6" onclick="zeigeStadt('Flussstadt E')">
+      <area shape="circle" coords="700,220,15" href="#" alt="Stadt 7" onclick="zeigeStadt('Küstenstadt F')">
+      <area shape="circle" coords="620,360,15" href="#" alt="Stadt 8" onclick="zeigeStadt('Küstenstadt G')">
+      <area shape="circle" coords="460,250,15" href="#" alt="Stadt 9" onclick="zeigeStadt('Inselstadt H')">
+      <area shape="circle" coords="300,400,15" href="#" alt="Stadt 10" onclick="zeigeStadt('Landstadt I')">
+    </map>
   </div>
 
-  <!-- Infofeld unter der Karte -->
-  <div id="stadtInfo">
-    <h2 id="stadtName">Stadtname</h2>
-    <p>Einwohnerzahl: <span id="einwohner">1234</span></p>
-    <p>Dringend benötigte Ware: <span id="bedarf">Fisch</span></p>
-    <p>Zufriedenheit: <span id="zufriedenheit">75%</span></p>
+  <!-- Stadtinfo -->
+  <div id="stadtinfo" style="display:none;">
+    <div class="stadtname" id="stadtname"></div>
+    <div class="stadtinhalt" id="stadtinhalt"></div>
   </div>
 
   <script>
-    // Später klickbare Städte → Hier Beispielhaft
-    function zeigeStadtInfo(name) {
-      document.getElementById("stadtName").textContent = name;
-      document.getElementById("einwohner").textContent = Math.floor(Math.random() * 2000) + 500;
-      document.getElementById("bedarf").textContent = ["Fisch", "Wein", "Werkzeuge", "Holz", "Brot"][Math.floor(Math.random() * 5)];
-      document.getElementById("zufriedenheit").textContent = Math.floor(Math.random() * 50) + 50 + "%";
-      document.getElementById("stadtInfo").style.display = "block";
+    function zeigeStadt(name) {
+      const infoBox = document.getElementById("stadtinfo");
+      const nameBox = document.getElementById("stadtname");
+      const inhaltBox = document.getElementById("stadtinhalt");
+
+      nameBox.textContent = name;
+      inhaltBox.innerHTML = `
+        Einwohner: ${berechneEinwohner()}<br>
+        Versorgung: gut<br>
+        Luxusgüter: gering<br>
+        Bedarf: Getreide, Kleidung
+      `;
+      infoBox.style.display = "block";
     }
 
-    // Menüumschaltung vorbereiten
-    function zeigeMenü(name) {
-      alert("Menü '" + name + "' wurde ausgewählt. (Diese Funktion wird später ergänzt)");
+    function berechneEinwohner() {
+      // Dummy-Berechnung für Prototyp
+      const basis = 500;
+      const versorgung = 1.2; // z. B. gut
+      const luxus = 0.8;
+      const vielfalt = 1.0;
+      const saison = 1.1;
+      return Math.round(basis * versorgung * luxus * vielfalt * saison);
+    }
+
+    function playSound() {
+      const audio = document.getElementById("button-sound");
+      audio.currentTime = 0;
+      audio.play();
     }
   </script>
-
 </body>
 </html>
