@@ -2,150 +2,170 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Handelsspiel Elandor</title>
   <style>
     body {
-      font-family: 'Georgia', serif;
-      background-color: #f0ead6;
       margin: 0;
-      padding: 0;
+      font-family: 'Georgia', serif;
+      background-color: #f3efe3;
     }
+
     header {
-      background-color: #8b5a2b;
+      background-color: #6b4e16;
       color: white;
       padding: 10px;
       text-align: center;
+      font-size: 24px;
     }
+
     nav {
-      background-color: #deb887;
-      padding: 10px;
       display: flex;
       justify-content: center;
-      gap: 10px;
+      background-color: #a67c52;
     }
+
     nav button {
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Wood_texture_01.svg/2560px-Wood_texture_01.svg.png');
-      background-size: cover;
-      border: 2px solid #654321;
-      color: white;
+      background: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+      border: 2px solid #53350a;
+      margin: 5px;
       padding: 10px 20px;
-      cursor: pointer;
-      font-size: 16px;
+      color: white;
       font-weight: bold;
-      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 10px;
     }
-    #karte {
+
+    nav button:hover {
+      background-color: #8b5e3c;
+    }
+
+    #map-container {
+      text-align: center;
+      background-color: #ddd;
+    }
+
+    #map {
       width: 100%;
       max-width: 1000px;
+      height: auto;
       display: block;
-      margin: 10px auto;
-    }
-    #stadtInfo, #inhalt {
-      max-width: 1000px;
       margin: 0 auto;
-      background-color: #fff7e6;
-      padding: 15px;
-      border: 2px solid #d2b48c;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      position: relative;
     }
-    .stadt {
+
+    .city-marker {
       position: absolute;
+      width: 14px;
+      height: 14px;
+      background-color: red;
+      border: 2px solid white;
+      border-radius: 50%;
       cursor: pointer;
-      font-weight: bold;
-      background-color: rgba(255,255,255,0.6);
-      padding: 2px 4px;
-      border-radius: 4px;
-      font-size: 12px;
+    }
+
+    #content {
+      max-width: 1000px;
+      margin: 10px auto;
+      background-color: #fffef8;
+      border: 2px solid #c0b283;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Handelsspiel Elandor</h1>
-    <p>Level: <span id="level">1</span> | XP: <span id="xp">0</span></p>
-  </header>
+  <header>Handelsspiel Elandor</header>
 
   <nav>
-    <button onclick="setMenu('uebersicht')">Übersicht</button>
-    <button onclick="setMenu('handel')">Handel</button>
-    <button onclick="setMenu('gebaeude')">Gebäude</button>
-    <button onclick="setMenu('schiffe')">Schiffe</button>
+    <button onclick="showTab('overview')">Übersicht</button>
+    <button onclick="showTab('trade')">Handel</button>
+    <button onclick="showTab('buildings')">Gebäude</button>
+    <button onclick="showTab('ships')">Schiffe</button>
   </nav>
 
-  <!-- Karte mit deiner Bild-URL -->
-  <img id="karte" src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" alt="Karte von Elandor" usemap="#stadtmap"/>
+  <div id="map-container">
+    <img id="map" src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" alt="Karte Elandor" />
+    <!-- Städte als Marker -->
+    <div class="city-marker" style="top: 40%; left: 20%;" onclick="selectCity('Avenport')"></div>
+    <div class="city-marker" style="top: 42%; left: 30%;" onclick="selectCity('Nandor')"></div>
+    <div class="city-marker" style="top: 60%; left: 25%;" onclick="selectCity('Grimshafen')"></div>
+    <div class="city-marker" style="top: 55%; left: 38%;" onclick="selectCity('Kardum')"></div>
+    <div class="city-marker" style="top: 65%; left: 45%;" onclick="selectCity('Drelburg')"></div>
+    <div class="city-marker" style="top: 48%; left: 55%;" onclick="selectCity('Elandra')"></div>
+    <div class="city-marker" style="top: 40%; left: 65%;" onclick="selectCity('Torval')"></div>
+    <div class="city-marker" style="top: 70%; left: 60%;" onclick="selectCity('Firburg')"></div>
+    <div class="city-marker" style="top: 30%; left: 75%;" onclick="selectCity('Nordwach')"></div>
+    <div class="city-marker" style="top: 65%; left: 75%;" onclick="selectCity('Südtor')"></div>
+    <div class="city-marker" style="top: 50%; left: 85%;" onclick="selectCity('Inselhafen')"></div>
+    <div class="city-marker" style="top: 70%; left: 90%;" onclick="selectCity('Windholm')"></div>
+  </div>
 
-  <!-- Stadt-Auswahl -->
-  <map name="stadtmap">
-    <area shape="circle" coords="150,220,15" alt="Vandoria" onclick="stadtAuswaehlen('Vandoria')">
-    <area shape="circle" coords="300,300,15" alt="Tirholm" onclick="stadtAuswaehlen('Tirholm')">
-    <area shape="circle" coords="500,400,15" alt="Eisenfurt" onclick="stadtAuswaehlen('Eisenfurt')">
-    <!-- Weitere Städte nach Bedarf -->
-  </map>
-
-  <!-- Stadtinfo & Menüinhalte -->
-  <div id="stadtInfo"><strong>Wähle eine Stadt auf der Karte aus.</strong></div>
-  <div id="inhalt"></div>
+  <div id="content">
+    <div id="overviewTab">Wähle eine Stadt auf der Karte, um Informationen anzuzeigen.</div>
+    <div id="tradeTab" class="hidden">Handelsfunktionen folgen…</div>
+    <div id="buildingsTab" class="hidden">Gebäudeübersicht folgt…</div>
+    <div id="shipsTab" class="hidden">
+      <h3>Verfügbare Schiffe</h3>
+      <ul id="shipList"></ul>
+    </div>
+  </div>
 
   <script>
-    let aktiveStadt = null;
-    let xp = 0;
-    let level = 1;
-    const schiffe = [
-      { name: "Schnigge", level: 1 },
-      { name: "Kraier", level: 10 },
-      { name: "Kogge", level: 20 },
-      { name: "Holk", level: 30 }
+    let selectedCity = null;
+    let playerXP = 0;
+    const playerLevel = () => Math.floor(playerXP / 100);
+    
+    const ships = [
+      { name: 'Schnigge', level: 1 },
+      { name: 'Kraier', level: 10 },
+      { name: 'Kogge', level: 20 },
+      { name: 'Holk', level: 30 }
     ];
 
-    function stadtAuswaehlen(name) {
-      aktiveStadt = name;
-      document.getElementById("stadtInfo").innerHTML = `
-        <h2>${name}</h2>
-        <p>Einwohner: ${1000 + level * 50}</p>
-        <p>Status: Ruhig</p>
-      `;
-      setMenu('uebersicht');
-    }
+    function showTab(tab) {
+      document.getElementById("overviewTab").classList.add("hidden");
+      document.getElementById("tradeTab").classList.add("hidden");
+      document.getElementById("buildingsTab").classList.add("hidden");
+      document.getElementById("shipsTab").classList.add("hidden");
+      document.getElementById(tab + "Tab").classList.remove("hidden");
 
-    function setMenu(m) {
-      const inhalt = document.getElementById("inhalt");
-      if (!aktiveStadt) {
-        inhalt.innerHTML = "<p>Bitte wähle zuerst eine Stadt aus.</p>";
-        return;
-      }
-
-      if (m === 'uebersicht') {
-        inhalt.innerHTML = `<p>Übersicht von ${aktiveStadt}: Versorgung gut, Bevölkerung wächst.</p>`;
-      } else if (m === 'handel') {
-        inhalt.innerHTML = `<p>Hier kannst du demnächst mit ${aktiveStadt} Handel treiben.</p>`;
-      } else if (m === 'gebaeude') {
-        inhalt.innerHTML = `<p>Baue Gebäude in ${aktiveStadt}. (Funktion in Arbeit)</p>`;
-      } else if (m === 'schiffe') {
-        let schiffsliste = schiffe
-          .filter(s => level >= s.level)
-          .map(s => `<li>${s.name} (ab Level ${s.level})</li>`)
-          .join("");
-        inhalt.innerHTML = `<h3>Verfügbare Schiffe:</h3><ul>${schiffsliste}</ul>`;
+      if (tab === "ships") {
+        updateShipList();
       }
     }
 
-    // XP & Levelsystem
-    function addXP(menge) {
-      xp += menge;
-      if (xp >= level * 100) {
-        xp = 0;
-        level++;
-        alert("Du bist jetzt Level " + level + "!");
-        document.getElementById("level").textContent = level;
-      }
-      document.getElementById("xp").textContent = xp;
+    function selectCity(cityName) {
+      selectedCity = cityName;
+      const overview = document.getElementById("overviewTab");
+      overview.innerHTML = `<h3>${cityName}</h3><p>Einwohner: ${generatePopulation()}</p><p>Versorgung und Zufriedenheit folgen…</p>`;
+      showTab('overview');
     }
 
-    // Debug: XP hinzufügen (z.B. bei erfolgreichem Handel)
-    // addXP(50);
+    function generatePopulation() {
+      const base = 1000 + Math.floor(Math.random() * 1000);
+      return base.toLocaleString();
+    }
+
+    function updateShipList() {
+      const shipList = document.getElementById("shipList");
+      shipList.innerHTML = "";
+      ships.forEach(ship => {
+        if (playerLevel() >= ship.level) {
+          const li = document.createElement("li");
+          li.textContent = `${ship.name} (freigeschaltet ab Level ${ship.level})`;
+          shipList.appendChild(li);
+        }
+      });
+    }
+
+    // Initial
+    showTab('overview');
   </script>
 </body>
 </html>
