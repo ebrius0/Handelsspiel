@@ -2,137 +2,150 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Handelsspiel Elandor</title>
   <style>
     body {
-      font-family: 'Garamond', serif;
-      background-color: #f2e6c9;
+      font-family: 'Georgia', serif;
+      background-color: #f0ead6;
       margin: 0;
       padding: 0;
+    }
+    header {
+      background-color: #8b5a2b;
+      color: white;
+      padding: 10px;
       text-align: center;
     }
-    #menu {
-      background-color: #8b5e3c;
+    nav {
+      background-color: #deb887;
       padding: 10px;
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: 10px;
     }
-    #menu button {
-      font-family: 'Garamond', serif;
-      font-size: 16px;
-      padding: 10px 20px;
-      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-      background-color: #a0744b;
+    nav button {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Wood_texture_01.svg/2560px-Wood_texture_01.svg.png');
+      background-size: cover;
+      border: 2px solid #654321;
       color: white;
-      border: 2px solid #5c3a1e;
-      border-radius: 10px;
+      padding: 10px 20px;
       cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
     }
-    #menu button:hover {
-      background-color: #c19166;
-    }
-    #content {
-      padding: 20px;
-    }
-    .ship-card {
-      border: 1px solid #5c3a1e;
-      border-radius: 10px;
-      background-color: #fff8e1;
+    #karte {
+      width: 100%;
+      max-width: 1000px;
+      display: block;
       margin: 10px auto;
-      padding: 10px;
-      width: 300px;
-      box-shadow: 2px 2px 5px #aaa;
     }
-    .disabled {
-      opacity: 0.5;
-      pointer-events: none;
+    #stadtInfo, #inhalt {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #fff7e6;
+      padding: 15px;
+      border: 2px solid #d2b48c;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .stadt {
+      position: absolute;
+      cursor: pointer;
+      font-weight: bold;
+      background-color: rgba(255,255,255,0.6);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Handelsspiel Elandor</h1>
+    <p>Level: <span id="level">1</span> | XP: <span id="xp">0</span></p>
+  </header>
 
-  <div id="menu">
-    <button onclick="showOverview()">Übersicht</button>
-    <button onclick="showTrade()">Handel</button>
-    <button onclick="showBuildings()">Gebäude</button>
-    <button onclick="showShips()">Schiffe</button>
-  </div>
+  <nav>
+    <button onclick="setMenu('uebersicht')">Übersicht</button>
+    <button onclick="setMenu('handel')">Handel</button>
+    <button onclick="setMenu('gebaeude')">Gebäude</button>
+    <button onclick="setMenu('schiffe')">Schiffe</button>
+  </nav>
 
-  <!-- Hier bleibt die Karte immer sichtbar -->
-  <div>
-    <img src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png"
-         alt="Karte von Elandor"
-         style="width: 90%; max-width: 900px; margin-top: 10px; border: 3px solid #5c3a1e;" />
-  </div>
+  <!-- Karte mit deiner Bild-URL -->
+  <img id="karte" src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" alt="Karte von Elandor" usemap="#stadtmap"/>
 
-  <!-- Hier wird der Menüinhalt dynamisch angezeigt -->
-  <div id="content"></div>
+  <!-- Stadt-Auswahl -->
+  <map name="stadtmap">
+    <area shape="circle" coords="150,220,15" alt="Vandoria" onclick="stadtAuswaehlen('Vandoria')">
+    <area shape="circle" coords="300,300,15" alt="Tirholm" onclick="stadtAuswaehlen('Tirholm')">
+    <area shape="circle" coords="500,400,15" alt="Eisenfurt" onclick="stadtAuswaehlen('Eisenfurt')">
+    <!-- Weitere Städte nach Bedarf -->
+  </map>
+
+  <!-- Stadtinfo & Menüinhalte -->
+  <div id="stadtInfo"><strong>Wähle eine Stadt auf der Karte aus.</strong></div>
+  <div id="inhalt"></div>
 
   <script>
-    // Spielstatus
-    const playerLevel = 18;
-    const ownedShips = [];
-
-    const shipTypes = [
-      { name: "Schnigge", requiredLevel: 1, cargo: 20, speed: "hoch", cost: 500 },
-      { name: "Kraier", requiredLevel: 10, cargo: 40, speed: "mittel", cost: 1000 },
-      { name: "Kogge", requiredLevel: 20, cargo: 80, speed: "niedrig", cost: 2000 },
-      { name: "Holk", requiredLevel: 30, cargo: 120, speed: "sehr niedrig", cost: 3000 }
+    let aktiveStadt = null;
+    let xp = 0;
+    let level = 1;
+    const schiffe = [
+      { name: "Schnigge", level: 1 },
+      { name: "Kraier", level: 10 },
+      { name: "Kogge", level: 20 },
+      { name: "Holk", level: 30 }
     ];
 
-    function showOverview() {
-      document.getElementById("content").innerHTML = "<h2>Stadtübersicht (folgt später)</h2>";
+    function stadtAuswaehlen(name) {
+      aktiveStadt = name;
+      document.getElementById("stadtInfo").innerHTML = `
+        <h2>${name}</h2>
+        <p>Einwohner: ${1000 + level * 50}</p>
+        <p>Status: Ruhig</p>
+      `;
+      setMenu('uebersicht');
     }
 
-    function showTrade() {
-      document.getElementById("content").innerHTML = "<h2>Handelsübersicht (folgt später)</h2>";
-    }
-
-    function showBuildings() {
-      document.getElementById("content").innerHTML = "<h2>Gebäudeübersicht (folgt später)</h2>";
-    }
-
-    function showShips() {
-      const content = document.getElementById("content");
-      content.innerHTML = "<h2>Schiffswerft</h2>";
-
-      let html = "<h3>Besitzte Schiffe:</h3>";
-      if (ownedShips.length === 0) {
-        html += "<p>Du besitzt noch keine Schiffe.</p>";
-      } else {
-        ownedShips.forEach((ship, index) => {
-          html += `<div class="ship-card">
-                    <strong>${ship.name}</strong><br>
-                    Laderaum: ${ship.cargo}<br>
-                    Geschwindigkeit: ${ship.speed}
-                   </div>`;
-        });
+    function setMenu(m) {
+      const inhalt = document.getElementById("inhalt");
+      if (!aktiveStadt) {
+        inhalt.innerHTML = "<p>Bitte wähle zuerst eine Stadt aus.</p>";
+        return;
       }
 
-      html += "<h3>Neue Schiffe bauen:</h3>";
-      shipTypes.forEach((ship) => {
-        const canBuild = playerLevel >= ship.requiredLevel;
-        html += `<div class="ship-card ${canBuild ? "" : "disabled"}">
-                  <strong>${ship.name}</strong><br>
-                  Benötigtes Level: ${ship.requiredLevel}<br>
-                  Laderaum: ${ship.cargo}<br>
-                  Geschwindigkeit: ${ship.speed}<br>
-                  Kosten: ${ship.cost} Gold<br>
-                  <button ${canBuild ? "" : "disabled"} onclick="buildShip('${ship.name}')">Bauen</button>
-                </div>`;
-      });
-
-      content.innerHTML += html;
+      if (m === 'uebersicht') {
+        inhalt.innerHTML = `<p>Übersicht von ${aktiveStadt}: Versorgung gut, Bevölkerung wächst.</p>`;
+      } else if (m === 'handel') {
+        inhalt.innerHTML = `<p>Hier kannst du demnächst mit ${aktiveStadt} Handel treiben.</p>`;
+      } else if (m === 'gebaeude') {
+        inhalt.innerHTML = `<p>Baue Gebäude in ${aktiveStadt}. (Funktion in Arbeit)</p>`;
+      } else if (m === 'schiffe') {
+        let schiffsliste = schiffe
+          .filter(s => level >= s.level)
+          .map(s => `<li>${s.name} (ab Level ${s.level})</li>`)
+          .join("");
+        inhalt.innerHTML = `<h3>Verfügbare Schiffe:</h3><ul>${schiffsliste}</ul>`;
+      }
     }
 
-    function buildShip(shipName) {
-      const ship = shipTypes.find(s => s.name === shipName);
-      ownedShips.push(ship);
-      alert(`${ship.name} wurde gebaut!`);
-      showShips(); // Ansicht aktualisieren
+    // XP & Levelsystem
+    function addXP(menge) {
+      xp += menge;
+      if (xp >= level * 100) {
+        xp = 0;
+        level++;
+        alert("Du bist jetzt Level " + level + "!");
+        document.getElementById("level").textContent = level;
+      }
+      document.getElementById("xp").textContent = xp;
     }
+
+    // Debug: XP hinzufügen (z.B. bei erfolgreichem Handel)
+    // addXP(50);
   </script>
-
 </body>
 </html>
