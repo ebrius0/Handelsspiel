@@ -2,152 +2,137 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Handelsspiel Elandor</title>
   <style>
     body {
+      font-family: 'Garamond', serif;
+      background-color: #f2e6c9;
       margin: 0;
-      font-family: 'Georgia', serif;
-      background-color: #f4f1e6;
-    }
-
-    header {
-      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-      background-color: #8b5a2b;
-      color: white;
+      padding: 0;
       text-align: center;
-      padding: 12px 0;
-      font-size: 24px;
-      font-weight: bold;
-      border-bottom: 3px solid #5c3a1e;
     }
-
-    nav {
+    #menu {
+      background-color: #8b5e3c;
+      padding: 10px;
       display: flex;
       justify-content: center;
       gap: 20px;
-      background-color: #a9744f;
-      padding: 12px;
-      border-bottom: 2px solid #5c3a1e;
     }
-
-    nav button {
-      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-      border: 2px solid #5c3a1e;
-      padding: 10px 18px;
+    #menu button {
+      font-family: 'Garamond', serif;
       font-size: 16px;
+      padding: 10px 20px;
+      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+      background-color: #a0744b;
       color: white;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-
-    nav button:hover {
-      background-color: #c9a66b;
-    }
-
-    #map-container {
-      position: relative;
-      width: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    #elandor-map {
-      width: 100%;
-      display: block;
-    }
-
-    .city {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      background-color: red;
-      border: 2px solid white;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    #stadtinfo {
-      max-width: 1000px;
-      margin: 20px auto;
-      background-color: #fff3d9;
-      padding: 15px;
       border: 2px solid #5c3a1e;
-      border-radius: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #menu button:hover {
+      background-color: #c19166;
+    }
+    #content {
+      padding: 20px;
+    }
+    .ship-card {
+      border: 1px solid #5c3a1e;
+      border-radius: 10px;
+      background-color: #fff8e1;
+      margin: 10px auto;
+      padding: 10px;
+      width: 300px;
+      box-shadow: 2px 2px 5px #aaa;
+    }
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <header>Handelsspiel Elandor</header>
-  <nav>
-    <button onclick="playSound();zeigeMenü('übersicht')">Übersicht</button>
-    <button onclick="playSound();zeigeMenü('handel')">Handel</button>
-    <button onclick="playSound();zeigeMenü('gebäude')">Gebäude</button>
-    <button onclick="playSound();zeigeMenü('schiffe')">Schiffe</button>
-  </nav>
 
-  <div id="map-container">
-    <img id="elandor-map" src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" alt="Elandor Karte" />
-
-    <!-- Beispielhafte Städte -->
-    <div class="city" style="top: 30%; left: 20%;" onclick="stadtAnzeigen('Hafenstadt')"></div>
-    <div class="city" style="top: 40%; left: 35%;" onclick="stadtAnzeigen('Norddorf')"></div>
-    <div class="city" style="top: 45%; left: 60%;" onclick="stadtAnzeigen('Flussheim')"></div>
-    <div class="city" style="top: 55%; left: 25%;" onclick="stadtAnzeigen('Westhavn')"></div>
-    <div class="city" style="top: 62%; left: 50%;" onclick="stadtAnzeigen('Mittelstedt')"></div>
-    <div class="city" style="top: 75%; left: 30%;" onclick="stadtAnzeigen('Inselfeste')"></div>
-    <div class="city" style="top: 70%; left: 70%;" onclick="stadtAnzeigen('Ostburg')"></div>
-    <div class="city" style="top: 80%; left: 50%;" onclick="stadtAnzeigen('Südflut')"></div>
-    <div class="city" style="top: 35%; left: 80%;" onclick="stadtAnzeigen('Kliffhafen')"></div>
-    <div class="city" style="top: 20%; left: 60%;" onclick="stadtAnzeigen('Bergdorf')"></div>
+  <div id="menu">
+    <button onclick="showOverview()">Übersicht</button>
+    <button onclick="showTrade()">Handel</button>
+    <button onclick="showBuildings()">Gebäude</button>
+    <button onclick="showShips()">Schiffe</button>
   </div>
 
-  <div id="stadtinfo">
-    <h2>Stadtinformationen</h2>
-    <div id="info-inhalt">Wähle eine Stadt auf der Karte.</div>
+  <!-- Hier bleibt die Karte immer sichtbar -->
+  <div>
+    <img src="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png"
+         alt="Karte von Elandor"
+         style="width: 90%; max-width: 900px; margin-top: 10px; border: 3px solid #5c3a1e;" />
   </div>
 
-  <audio id="sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_14ae6cc1a2.mp3?filename=wooden-click-114241.mp3"></audio>
+  <!-- Hier wird der Menüinhalt dynamisch angezeigt -->
+  <div id="content"></div>
 
   <script>
-    function playSound() {
-      const sound = document.getElementById('sound');
-      sound.currentTime = 0;
-      sound.play();
+    // Spielstatus
+    const playerLevel = 18;
+    const ownedShips = [];
+
+    const shipTypes = [
+      { name: "Schnigge", requiredLevel: 1, cargo: 20, speed: "hoch", cost: 500 },
+      { name: "Kraier", requiredLevel: 10, cargo: 40, speed: "mittel", cost: 1000 },
+      { name: "Kogge", requiredLevel: 20, cargo: 80, speed: "niedrig", cost: 2000 },
+      { name: "Holk", requiredLevel: 30, cargo: 120, speed: "sehr niedrig", cost: 3000 }
+    ];
+
+    function showOverview() {
+      document.getElementById("content").innerHTML = "<h2>Stadtübersicht (folgt später)</h2>";
     }
 
-    function zeigeMenü(art) {
-      document.getElementById('info-inhalt').innerHTML = `Du hast das Menü <b>${art}</b> gewählt.`;
+    function showTrade() {
+      document.getElementById("content").innerHTML = "<h2>Handelsübersicht (folgt später)</h2>";
     }
 
-    function stadtAnzeigen(name) {
-      // Simulierte Faktoren zur Einwohnerberechnung
-      const versorgung = Math.random();     // Nahrung
-      const luxus = Math.random();          // Luxusgüter
-      const vielfalt = Math.random();       // Warenspektrum
-      const gebäude = Math.random();        // Ausbaustufe
-      const saison = Math.random();         // Saison-Einfluss
+    function showBuildings() {
+      document.getElementById("content").innerHTML = "<h2>Gebäudeübersicht (folgt später)</h2>";
+    }
 
-      const basis = 500;
-      const einwohner = Math.floor(
-        basis +
-        versorgung * 300 +
-        luxus * 200 +
-        vielfalt * 100 +
-        gebäude * 150 +
-        saison * 100
-      );
+    function showShips() {
+      const content = document.getElementById("content");
+      content.innerHTML = "<h2>Schiffswerft</h2>";
 
-      document.getElementById('info-inhalt').innerHTML = `
-        <h3>${name}</h3>
-        <p>Einwohnerzahl: <strong>${einwohner}</strong></p>
-        <p>Versorgungsgrad: ${(versorgung * 100).toFixed(0)}%</p>
-        <p>Zufriedenheit: ${(luxus * 100).toFixed(0)}%</p>
-        <p>Warenvielfalt: ${(vielfalt * 100).toFixed(0)}%</p>
-        <p>Gebäudeausbau: ${(gebäude * 100).toFixed(0)}%</p>
-        <p>Saisoneffekt: ${(saison * 100).toFixed(0)}%</p>
-      `;
+      let html = "<h3>Besitzte Schiffe:</h3>";
+      if (ownedShips.length === 0) {
+        html += "<p>Du besitzt noch keine Schiffe.</p>";
+      } else {
+        ownedShips.forEach((ship, index) => {
+          html += `<div class="ship-card">
+                    <strong>${ship.name}</strong><br>
+                    Laderaum: ${ship.cargo}<br>
+                    Geschwindigkeit: ${ship.speed}
+                   </div>`;
+        });
+      }
+
+      html += "<h3>Neue Schiffe bauen:</h3>";
+      shipTypes.forEach((ship) => {
+        const canBuild = playerLevel >= ship.requiredLevel;
+        html += `<div class="ship-card ${canBuild ? "" : "disabled"}">
+                  <strong>${ship.name}</strong><br>
+                  Benötigtes Level: ${ship.requiredLevel}<br>
+                  Laderaum: ${ship.cargo}<br>
+                  Geschwindigkeit: ${ship.speed}<br>
+                  Kosten: ${ship.cost} Gold<br>
+                  <button ${canBuild ? "" : "disabled"} onclick="buildShip('${ship.name}')">Bauen</button>
+                </div>`;
+      });
+
+      content.innerHTML += html;
+    }
+
+    function buildShip(shipName) {
+      const ship = shipTypes.find(s => s.name === shipName);
+      ownedShips.push(ship);
+      alert(`${ship.name} wurde gebaut!`);
+      showShips(); // Ansicht aktualisieren
     }
   </script>
+
 </body>
 </html>
