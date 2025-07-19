@@ -77,7 +77,7 @@
       font-size: 14px;
       margin: 2px 2px;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 4px; /* Angepasst auf 4px */
     }
     button:hover {
       background: #45a049;
@@ -88,6 +88,54 @@
         margin-right: 5px;
         border: 1px solid #ccc;
         border-radius: 4px;
+    }
+
+    /* NEUE STYLES FÜR SCHIFFSMENÜ */
+    .schiff-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsives Raster */
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .schiff-karte {
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Inhalte oben/unten ausrichten */
+    }
+    .schiff-karte h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    .schiff-info p {
+        margin: 5px 0;
+        font-size: 0.9em;
+    }
+    .schiff-aktionen {
+        margin-top: 15px;
+        text-align: center;
+    }
+    .kaufen-button {
+        background: #007bff; /* Blau für Kauf-Buttons */
+        color: white;
+        border: none;
+        padding: 10px 20px; /* Größerer Padding */
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        width: 100%; /* Volle Breite innerhalb der Karte */
+        box-sizing: border-box; /* Padding und Border innerhalb der Breite */
+    }
+    .kaufen-button:hover {
+        background: #0056b3;
+    }
+    .kaufen-button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
     }
   </style>
 </head>
@@ -134,78 +182,104 @@
   };
 
   // --- STÄDTEDATEN ---
-  // Koordinaten sind Platzhalter und MÜSSEN manuell an deine gewählte Karte angepasst werden!
+  // Koordinaten wurden für eine generische Fantasy-Karte angepasst.
+  // Du musst diese eventuell noch feinjustieren, damit sie perfekt zu DEINER spezifischen Karte passen!
+  // Produktionsfaktoren: Niedrigerer Wert = Stadt produziert die Ware effektiv (günstigerer Verkauf für Spieler).
+  // Ein Faktor von 1.0 bedeutet Standardpreis. Ein Faktor > 1.0 bedeutet die Stadt ist kein "Produzent" dieser Ware.
   const STAEDTE = {
-    'Küstenstadt A': { x: 150, y: 100, einwohner: 1000, versorgung: 'Gut',
+    // Region: Nördliche Küstenregion / Fruchtbares Land
+    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut',
       gueter: {
-        'Fisch': { basisPreis: 12, lager: 50, produktionsFaktor: 0.8 }, // Produziert Fisch (günstiger verkauft)
-        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 1.0 }  // Standardpreis
+        'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 }, // Hauptproduzent Getreide
+        'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
+        'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
       }
     },
-    'Küstenstadt B': { x: 300, y: 80, einwohner: 950, versorgung: 'Mittel',
+    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut',
       gueter: {
-        'Holz': { basisPreis: 15, lager: 40, produktionsFaktor: 0.9 },
-        'Tuch': { basisPreis: 25, lager: 20, produktionsFaktor: 1.0 }
+        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
+        'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 }, // Kann Tuch herstellen, aber nicht spezialisiert
+        'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 } // Importiert Wein (etwas teurer)
       }
     },
-    'Küstenstadt C': { x: 450, y: 120, einwohner: 1100, versorgung: 'Sehr Gut',
+
+    // Region: Westliche Berge / Bergbau
+    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel',
       gueter: {
-        'Wein': { basisPreis: 20, lager: 30, produktionsFaktor: 0.85 },
-        'Getreide': { basisPreis: 16, lager: 60, produktionsFaktor: 0.9 }
+        'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 }, // Hauptproduzent Silbererz
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
+        'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
       }
     },
-    'Küstenstadt D': { x: 600, y: 150, einwohner: 800, versorgung: 'Schlecht',
+    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut',
       gueter: {
-        'Eisen': { basisPreis: 30, lager: 10, produktionsFaktor: 1.0 },
-        'Werkzeuge': { basisPreis: 40, lager: 12, produktionsFaktor: 1.1 } // Benötigt Werkzeuge (teurer verkauft)
+        'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 }, // Hauptproduzent Eisen
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
+        'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
       }
     },
-    'Küstenstadt E': { x: 750, y: 200, einwohner: 1300, versorgung: 'Gut',
+
+    // Region: Südliche Küste / Handwerk & Luxus
+    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend',
       gueter: {
-        'Silber': { basisPreis: 50, lager: 5, produktionsFaktor: 0.8 },
-        'Juwelen': { basisPreis: 100, lager: 2, produktionsFaktor: 0.9 }
+        'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 }, // Hauptproduzent Wein
+        'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
+        'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 } // Importiert Seide
       }
     },
-    'Küstenstadt F': { x: 880, y: 300, einwohner: 900, versorgung: 'Mittel',
+    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut',
       gueter: {
-        'Gewürze': { basisPreis: 60, lager: 7, produktionsFaktor: 0.85 },
-        'Seide': { basisPreis: 80, lager: 5, produktionsFaktor: 0.9 }
+        'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
+        'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
+        'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 } // Handelsposten für Gewürze
       }
     },
-    'Küstenstadt G': { x: 800, y: 450, einwohner: 1500, versorgung: 'Hervorragend',
+
+    // Region: Östliche Küste / Fischerei & Alchemie
+    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel',
       gueter: {
-        'Waffen': { basisPreis: 70, lager: 8, produktionsFaktor: 0.9 },
-        'Rüstungen': { basisPreis: 90, lager: 4, produktionsFaktor: 0.9 }
+        'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 }, // Hauptproduzent Fisch
+        'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
+        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 } // Produziert Salz
       }
     },
-    'Küstenstadt H': { x: 650, y: 520, einwohner: 1200, versorgung: 'Gut',
+    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut',
       gueter: {
-        'Gold': { basisPreis: 120, lager: 3, produktionsFaktor: 0.8 },
-        'Kräuter': { basisPreis: 22, lager: 25, produktionsFaktor: 1.0 }
+        'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 }, // Hauptproduzent Rüstungen
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
       }
     },
-    'Flussstadt A': { x: 350, y: 300, einwohner: 700, versorgung: 'Mittel',
+
+    // Region: Flussland / Landwirtschaft & Holz
+    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel',
       gueter: {
-        'Getreide': { basisPreis: 10, lager: 60, produktionsFaktor: 0.8 },
-        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 }
+        'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 }, // Sehr guter Getreideproduzent
+        'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
+        'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
       }
     },
-    'Flussstadt B': { x: 550, y: 400, einwohner: 900, versorgung: 'Schlecht',
+    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht',
       gueter: {
-        'Kohle': { basisPreis: 20, lager: 30, produktionsFaktor: 0.85 },
-        'Erz': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 }
+        'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 }, // Sehr guter Holzproduzent
+        'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
+        'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
       }
     },
-    'Inselstadt 1': { x: 100, y: 450, einwohner: 600, versorgung: 'Sehr Schlecht',
+
+    // Region: Inseln / Seltene Güter
+    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht',
       gueter: {
-        'Exotische Früchte': { basisPreis: 45, lager: 10, produktionsFaktor: 0.9 },
-        'Muscheln': { basisPreis: 15, lager: 50, produktionsFaktor: 0.8 }
+        'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.8 }, // Spezialisiert auf Rum
+        'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.8 },
+        'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.9 } // Kann Gewürze produzieren
       }
     },
-    'Inselstadt 2': { x: 900, y: 100, einwohner: 1000, versorgung: 'Gut',
+    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut',
       gueter: {
-        'Perlen': { basisPreis: 60, lager: 7, produktionsFaktor: 0.8 },
-        'Rum': { basisPreis: 80, lager: 5, produktionsFaktor: 0.9 }
+        'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.75 }, // Spezialisiert auf Perlen
+        'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.8 },
+        'Seide': { basisPreis: 80, lager: 7, produktionsFaktor: 0.9 } // Kann Seide produzieren
       }
     }
   };
@@ -370,15 +444,25 @@
       case 'schiffe':
         htmlInhalt = `<h2>Werft – Schiffe</h2>
           <h3>Verfügbare Schiffstypen zum Kauf:</h3>
-          <ul>`;
+          <div class="schiff-container">`;
         SCHIFFS_TYPEN.forEach(schiff => {
-          if (SPIELER_DATEN.level >= schiff.levelNoetig) {
-            htmlInhalt += `<li>${schiff.name} (ab Level ${schiff.levelNoetig}, Kapazität: ${schiff.kapazitaet}, Preis: ${schiff.preis} Gold) <button onclick="schiffKaufen('${schiff.name}', ${schiff.preis})">Kaufen</button></li>`;
-          } else {
-            htmlInhalt += `<li>${schiff.name} (ab Level ${schiff.levelNoetig}, Kapazität: ${schiff.kapazitaet}, Preis: ${schiff.preis} Gold) - Benötigtes Level: ${schiff.levelNoetig}</li>`;
-          }
+          const kannKaufen = SPIELER_DATEN.level >= schiff.levelNoetig && SPIELER_DATEN.gold >= schiff.preis;
+          htmlInhalt += `
+            <div class="schiff-karte">
+              <h3>${schiff.name}</h3>
+              <div class="schiff-info">
+                <p>Benötigtes Level: ${schiff.levelNoetig}</p>
+                <p>Kapazität: ${schiff.kapazitaet} Einheiten</p>
+                <p>Preis: ${schiff.preis} Gold</p>
+              </div>
+              <div class="schiff-aktionen">
+                <button class="kaufen-button" onclick="schiffKaufen('${schiff.name}', ${schiff.preis})" ${kannKaufen ? '' : 'disabled'}>
+                  ${kannKaufen ? 'Kaufen' : 'Nicht verfügbar'}
+                </button>
+              </div>
+            </div>`;
         });
-        htmlInhalt += `</ul>
+        htmlInhalt += `</div>
           <h3>Deine Schiffe:</h3>
           <ul>`;
         if (SPIELER_DATEN.schiffeBesitz.length === 0) {
@@ -514,7 +598,7 @@
     } else {
       alert('Nicht genug Gold, um dieses Schiff zu kaufen!');
     }
-    zeigeMenue('schiffe');
+    zeigeMenue('schiffe'); // Menü neu laden, um den Kauf zu reflektieren und Buttons zu aktualisieren
   }
 
   /**
@@ -604,12 +688,14 @@
     });
 
     // Gib dem Spieler ein Startschiff, damit er Kapazität hat
-    SPIELER_DATEN.schiffeBesitz.push({
-        name: 'Schnigge',
-        kapazitaet: SCHIFFS_TYPEN.find(s => s.name === 'Schnigge').kapazitaet,
-        ladungsmenge: 0,
-        ladungsDetails: {}
-    });
+    if (SPIELER_DATEN.schiffeBesitz.length === 0) { // Nur hinzufügen, wenn noch keine Schiffe vorhanden sind
+        SPIELER_DATEN.schiffeBesitz.push({
+            name: 'Schnigge',
+            kapazitaet: SCHIFFS_TYPEN.find(s => s.name === 'Schnigge').kapazitaet,
+            ladungsmenge: 0,
+            ladungsDetails: {}
+        });
+    }
 
 
     // Setze die initiale Ansicht und den Spielerstatus
