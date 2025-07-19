@@ -34,9 +34,13 @@
       background: #a97144;
     }
     #karte {
+      /* Breite auf 100% des Containers (oder einer anderen gewünschten Breite) */
       width: 100%;
-      height: 400px;
-      background: #cceeff; /* Blauer Hintergrund für Wasser/Meer, wird vom Bild überdeckt */
+      /* Höhe passt sich automatisch an, um das Seitenverhältnis der viewBox beizubehalten */
+      height: auto;
+      /* Entferne den blauen Hintergrund, da das Bild jetzt die gesamte Fläche abdecken sollte */
+      /* background: #cceeff; */
+      display: block; /* Stellt sicher, dass keine unerwünschten Ränder entstehen */
     }
     #inhalt {
       padding: 20px;
@@ -166,7 +170,6 @@
 </div>
 
 <svg id="karte" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1000" height="600" fill="#cceeff" />
   <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
 </svg>
 
@@ -184,7 +187,7 @@
     aktuelleStadt: null,
     schiffeBesitz: [], // Hier speichern wir Schiffe, die der Spieler besitzt
     inventar: {}, // z.B. { 'Getreide': 10, 'Holz': 5 } - gesamt über alle Schiffe
-    gebaeude: {} // z.B. { 'Elandor': { 'Lagerhaus': 1 } }
+    gebaeude: {} // z.b. { 'Elandor': { 'Lagerhaus': 1 } }
   };
 
   // --- RUF-RANG-DEFINITIONEN ---
@@ -345,7 +348,7 @@
     // So kann man sie trotzdem handeln, aber nicht als "Produzentenstadt".
     // Wichtig: Hier greifen wir auf die LIVE-Daten der Stadt zu, nicht auf die Konstante STAEDTE.
     if (!stadt.gueter[wareName]) {
-        stadt.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
+        stadt.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 }; // basisLager auch für unbekannte Waren initialisieren
     }
     const wareDaten = stadt.gueter[wareName];
 
@@ -354,7 +357,8 @@
     // Dynamischer Preismodifikator basierend auf Lagerbestand
     // Je weniger auf Lager, desto höher der Preis (beim Kauf)
     // Je mehr auf Lager, desto niedriger der Preis (beim Verkauf)
-    const maxLager = 100; // Annahme für maximales Lager einer Ware in einer Stadt
+    // Annahme für maximales Lager einer Ware in einer Stadt (könnte vom basisLager abhängen)
+    const maxLager = wareDaten.basisLager > 0 ? wareDaten.basisLager * 2 : 100; // Wenn basisLager bekannt, nutze es, sonst 100
     const minLager = 0;
 
     let lagerProzentsatz = (wareDaten.lager - minLager) / (maxLager - minLager);
@@ -372,8 +376,19 @@
     preis += schwankung;
 
     // Ruf-Einfluss auf den Preis
-    const rufEinfluss = SPIELER_DATEN.ruf * 0.01; // Z.B. +/- 1% pro Rufpunkt
-    preis *= (1 - rufEinfluss); // Guter Ruf senkt Kaufpreis / erhöht Verkaufspreis
+    // Guter Ruf: Kaufpreis sinkt, Verkaufspreis steigt (Spieler bekommt mehr)
+    // Schlechter Ruf: Kaufpreis steigt, Verkaufspreis sinkt (Spieler bekommt weniger)
+    // Beispiel: Bei Ruf +5: Preis * (1 - 0.05) = Preis * 0.95 (5% Rabatt beim Kauf, 5% Bonus beim Verkauf)
+    // Bei Ruf -5: Preis * (1 + 0.05) = Preis * 1.05 (5% Aufschlag beim Kauf, 5% Abzug beim Verkauf)
+    const rufEinflussFaktor = SPIELER_DATEN.ruf * 0.01; // Z.B. +/- 1% pro Rufpunkt
+
+    // Für Kaufpreis:
+    if (SPIELER_DATEN.ruf > 0) { // Guter Ruf: Preis sinkt
+        preis *= (1 - rufEinflussFaktor);
+    } else if (SPIELER_DATEN.ruf < 0) { // Schlechter Ruf: Preis steigt
+        preis *= (1 - rufEinflussFaktor); // negative rufEinflussFaktor wird zu positivem Zuschlag
+    }
+    // Bei Ruf 0 bleibt es neutral
 
     return Math.max(1, Math.round(preis)); // Preis muss mindestens 1 sein und ganzzahlig
   }
@@ -427,7 +442,7 @@
     }
 
     let htmlInhalt = '';
-    const aktuelleStadtDaten = SPIELER_DATEN.aktuelleStadt ? STAEDTE[SPIELER_DATEN.aktuelleStadt] : null;
+    const aktuelleStadtDaten = SPIELER_DATER.aktuelleStadt ? STAEDTE[SPIELER_DATEN.aktuelleStadt] : null;
 
     switch (menuepunkt) {
       case 'uebersicht':
@@ -447,7 +462,7 @@
           // andernfalls Standardwerte oder 0 verwenden.
           // Wichtig: Hier greifen wir auf die LIVE-Daten der Stadt zu, nicht auf die Konstante STAEDTE.
           if (!aktuelleStadtDaten.gueter[wareName]) {
-              aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
+              aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
           }
           const wareInStadt = aktuelleStadtDaten.gueter[wareName];
           const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
@@ -541,7 +556,7 @@
         } else {
           SPIELER_DATEN.schiffeBesitz.forEach((schiff, index) => {
             htmlInhalt += `<li>${schiff.name} (Kapazität: ${schiff.kapazitaet}, Beladen: ${schiff.ladungsmenge || 0})`;
-            // Optional: Hier könnte man weitere Aktionen pro Schiff einfügen (z.B. beladen, entladen, reparieren)
+            // Optional: Hier könnte man weitere Aktionen pro Schiff einfügen (z.b. beladen, entladen, reparieren)
             htmlInhalt += `</li>`;
           });
         }
@@ -565,7 +580,7 @@
     // Stellen Sie sicher, dass die Ware in den gueter der Stadt existiert,
     // ansonsten initialisieren wir sie mit einem Lager von 0.
     if (!aktuelleStadtDaten.gueter[wareName]) {
-        aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
+        aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
     }
     const wareInStadt = aktuelleStadtDaten.gueter[wareName];
 
@@ -606,8 +621,8 @@
       // Rufanpassung beim Kauf:
       // Kauf von knappen Gütern (Lager niedrig) könnte den Ruf leicht senken,
       // da man der Stadt etwas wegnimmt, das sie vielleicht braucht.
-      // Kauf von überflüssigen Gütern (Lager hoch) ist neutral.
-      if (wareInStadt.lager < (wareInStadt.basisLager || 50) / 2) { // Annahme: basisLager ist der Startwert
+      // Der basisLager Wert wird zum Vergleich herangezogen.
+      if (wareInStadt.lager < wareInStadt.basisLager * 0.5) { // Wenn Lager unter 50% des Basiswerts
           rufAenderung -= Math.floor(menge / 10); // Pro 10 Einheiten 1 Rufpunkt Abzug
       }
 
@@ -627,9 +642,9 @@
       // Rufanpassung beim Verkauf:
       // Verkauf von dringend benötigten Gütern (Lager niedrig) könnte den Ruf erhöhen.
       // Verkauf von überflüssigen Gütern (Lager hoch) ist neutral oder leicht negativ (Marktüberschwemmung).
-      if (wareInStadt.lager < (wareInStadt.basisLager || 50) / 2) { // Annahme: basisLager ist der Startwert
+      if (wareInStadt.lager < wareInStadt.basisLager * 0.5) { // Wenn Lager unter 50% des Basiswerts
           rufAenderung += Math.floor(menge / 10); // Pro 10 Einheiten 1 Rufpunkt Zuwachs
-      } else if (wareInStadt.lager > (wareInStadt.basisLager || 50) * 1.5) {
+      } else if (wareInStadt.lager > wareInStadt.basisLager * 1.5) { // Wenn Lager über 150% des Basiswerts
           rufAenderung -= Math.floor(menge / 20); // Bei Überschuss leichter Abzug
       }
     }
@@ -813,9 +828,12 @@
     for (const stadtName in STAEDTE) {
       const stadtDaten = STAEDTE[stadtName];
 
-      // Initialisiere basisLager für jede Ware in jeder Stadt (für Rufberechnung)
+      // Initialisiere basisLager für jede Ware in jeder Stadt (für Ruf- und Preisberechnung)
       for (const wareName in stadtDaten.gueter) {
-          stadtDaten.gueter[wareName].basisLager = stadtDaten.gueter[wareName].lager;
+          // Sicherstellen, dass basisLager gesetzt ist; falls nicht, ist es der initiale Lagerwert
+          if (typeof stadtDaten.gueter[wareName].basisLager === 'undefined') {
+            stadtDaten.gueter[wareName].basisLager = stadtDaten.gueter[wareName].lager;
+          }
       }
 
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
