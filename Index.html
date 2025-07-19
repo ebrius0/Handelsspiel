@@ -82,6 +82,10 @@
     button:hover {
       background: #45a049;
     }
+    button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
     input[type="number"] {
         width: 60px;
         padding: 5px;
@@ -284,6 +288,15 @@
     }
   };
 
+  // Liste aller existierenden Waren, um sicherzustellen, dass alle im Handelsmenü angezeigt werden
+  // Dies sollte manuell gepflegt werden, wenn neue Waren hinzugefügt werden,
+  // oder dynamisch aus allen STAEDTE-Gütern extrahiert werden.
+  const ALLE_WAREN = [
+    'Getreide', 'Fisch', 'Wolle', 'Holz', 'Tuch', 'Wein', 'Silbererz', 'Eisen', 'Kohle',
+    'Waffen', 'Rüstungen', 'Exotische Früchte', 'Juwelen', 'Gewürze', 'Kräuter',
+    'Salz', 'Leder', 'Seide', 'Rum', 'Tropische Hölzer', 'Perlen', 'Edelsteine'
+  ];
+
   // --- SCHIFFS_TYPEN ---
   const SCHIFFS_TYPEN = [
     { name: 'Schnigge', levelNoetig: 1, kapazitaet: 50, preis: 500 },
@@ -309,13 +322,14 @@
    */
   function berechneAktuellenPreis(stadtName, wareName) {
     const stadt = STAEDTE[stadtName];
-    const wareDaten = stadt.gueter[wareName];
-    if (!wareDaten) return 0; // Ware nicht in dieser Stadt verfügbar
+    // Wenn die Stadt die Ware nicht in ihrer Liste hat, nehmen wir einen generischen Basispreis und Faktor 1.2 an.
+    // So kann man sie trotzdem handeln, aber nicht als "Produzentenstadt".
+    const wareDaten = stadt.gueter[wareName] || { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
 
     let preis = wareDaten.basisPreis * (wareDaten.produktionsFaktor || 1.0); // Standard 1.0 wenn kein Faktor definiert
 
-    // Einfache Zufallsschwankung (+/- 10% des Basispreises)
-    const schwankung = Math.floor(Math.random() * (wareDaten.basisPreis * 0.2)) - (wareDaten.basisPreis * 0.1);
+    // Einfache Zufallsschwankung (+/- 5% des Basispreises)
+    const schwankung = Math.floor(Math.random() * (wareDaten.basisPreis * 0.1)) - (wareDaten.basisPreis * 0.05);
     preis += schwankung;
 
     return Math.max(1, Math.round(preis)); // Preis muss mindestens 1 sein und ganzzahlig
@@ -383,25 +397,35 @@
         htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Handel</h2>
           <table>
             <tr><th>Ware</th><th>Preis</th><th>Stadt-Lager</th><th>Deine Menge</th><th colspan="2">Aktion</th></tr>`;
-        for (const wareName in aktuelleStadtDaten.gueter) {
-          const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName); // Dynamischer Preis
-          const ware = aktuelleStadtDaten.gueter[wareName];
+
+        // Iteriere über ALLE_WAREN, um sicherzustellen, dass jede Ware angezeigt wird
+        ALLE_WAREN.forEach(wareName => {
+          // Prüfen, ob die Stadt diese spezifische Ware in ihren Gütern hat,
+          // andernfalls Standardwerte oder 0 verwenden.
+          const wareInStadt = aktuelleStadtDaten.gueter[wareName] || { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
+          const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+          const spielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
+          const stadtLager = wareInStadt.lager;
+
+          const kannKaufen = (stadtLager > 0);
+          const kannVerkaufen = (spielerMenge > 0);
+
           htmlInhalt += `
               <tr>
                 <td>${wareName}</td>
                 <td id="preis_${wareName}">${preis} Gold</td>
-                <td id="stadtLager_${wareName}">${ware.lager}</td>
-                <td id="spielerMenge_${wareName}">${SPIELER_DATEN.inventar[wareName] || 0}</td>
+                <td id="stadtLager_${wareName}">${stadtLager}</td>
+                <td id="spielerMenge_${wareName}">${spielerMenge}</td>
                 <td>
-                  <input type="number" id="mengeKaufen_${wareName}" value="1" min="1" max="${ware.lager}" style="width: 60px;">
-                  <button onclick="handelWare('${wareName}', 'kaufen')">Kaufen</button>
+                  <input type="number" id="mengeKaufen_${wareName}" value="1" min="1" max="${stadtLager}" style="width: 60px;" ${kannKaufen ? '' : 'disabled'}>
+                  <button id="btnKaufen_${wareName}" onclick="handelWare('${wareName}', 'kaufen')" ${kannKaufen ? '' : 'disabled'}>Kaufen</button>
                 </td>
                 <td>
-                  <input type="number" id="mengeVerkaufen_${wareName}" value="1" min="1" max="${SPIELER_DATEN.inventar[wareName] || 0}" style="width: 60px;">
-                  <button onclick="handelWare('${wareName}', 'verkaufen')">Verkaufen</button>
+                  <input type="number" id="mengeVerkaufen_${wareName}" value="1" min="1" max="${spielerMenge}" style="width: 60px;" ${kannVerkaufen ? '' : 'disabled'}>
+                  <button id="btnVerkaufen_${wareName}" onclick="handelWare('${wareName}', 'verkaufen')" ${kannVerkaufen ? '' : 'disabled'}>Verkaufen</button>
                 </td>
               </tr>`;
-        }
+        });
         htmlInhalt += `</table>
         <h3>Dein Inventar:</h3>
         <table>
@@ -490,10 +514,16 @@
    */
   function handelWare(wareName, aktion) {
     const aktuelleStadtDaten = STAEDTE[SPIELER_DATEN.aktuelleStadt];
+    // Stellen Sie sicher, dass die Ware in den gueter der Stadt existiert,
+    // ansonsten initialisieren wir sie mit einem Lager von 0.
+    if (!aktuelleStadtDaten.gueter[wareName]) {
+        aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2 };
+    }
     const wareInStadt = aktuelleStadtDaten.gueter[wareName];
 
     let mengeInputId = (aktion === 'kaufen') ? `mengeKaufen_${wareName}` : `mengeVerkaufen_${wareName}`;
-    let menge = parseInt(document.getElementById(mengeInputId).value);
+    let mengeElement = document.getElementById(mengeInputId);
+    let menge = parseInt(mengeElement.value);
 
     if (isNaN(menge) || menge <= 0) {
       alert('Bitte gib eine gültige Menge ein (mindestens 1).');
@@ -518,7 +548,7 @@
       }
 
       SPIELER_DATEN.gold -= gesamtPreis;
-      wareInStadt.lager -= menge;
+      wareInStadt.lager -= menge; // Lager der Stadt verringert sich
       SPIELER_DATEN.inventar[wareName] = (SPIELER_DATEN.inventar[wareName] || 0) + menge;
       aktualisiereXP(5 * menge); // Mehr XP für größere Mengen
       alert(`${menge} ${wareName} für ${gesamtPreis} Gold gekauft.`);
@@ -530,18 +560,52 @@
       }
 
       SPIELER_DATEN.gold += gesamtPreis;
-      wareInStadt.lager += menge;
+      wareInStadt.lager += menge; // Lager der Stadt erhöht sich
       SPIELER_DATEN.inventar[wareName] -= menge;
       aktualisiereXP(5 * menge);
       alert(`${menge} ${wareName} für ${gesamtPreis} Gold verkauft.`);
     }
 
-    // Aktualisiere die Anzeigen direkt, ohne das ganze Menü neu zu rendern
+    // Aktualisiere die Anzeigen direkt
     document.getElementById(`stadtLager_${wareName}`).textContent = wareInStadt.lager;
     document.getElementById(`spielerMenge_${wareName}`).textContent = SPIELER_DATEN.inventar[wareName];
-    document.getElementById(`mengeKaufen_${wareName}`).setAttribute('max', wareInStadt.lager);
-    document.getElementById(`mengeVerkaufen_${wareName}`).setAttribute('max', SPIELER_DATEN.inventar[wareName]);
-    document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`; // Preis könnte sich nach Handel ändern
+
+    // Aktualisiere die max-Werte und den disabled-Status der Buttons
+    const neuerStadtLager = wareInStadt.lager;
+    const neuerSpielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
+
+    // Kauf-Button aktualisieren
+    const kaufenInput = document.getElementById(`mengeKaufen_${wareName}`);
+    const kaufenButton = document.getElementById(`btnKaufen_${wareName}`);
+    if (kaufenInput && kaufenButton) {
+        kaufenInput.setAttribute('max', neuerStadtLager);
+        if (neuerStadtLager <= 0) {
+            kaufenInput.disabled = true;
+            kaufenButton.disabled = true;
+        } else {
+            kaufenInput.disabled = false;
+            kaufenButton.disabled = false;
+        }
+        kaufenInput.value = 1; // Setze Menge zurück auf 1 nach Handel
+    }
+
+
+    // Verkauf-Button aktualisieren
+    const verkaufenInput = document.getElementById(`mengeVerkaufen_${wareName}`);
+    const verkaufenButton = document.getElementById(`btnVerkaufen_${wareName}`);
+    if (verkaufenInput && verkaufenButton) {
+        verkaufenInput.setAttribute('max', neuerSpielerMenge);
+        if (neuerSpielerMenge <= 0) {
+            verkaufenInput.disabled = true;
+            verkaufenButton.disabled = true;
+        } else {
+            verkaufenInput.disabled = false;
+            verkaufenButton.disabled = false;
+        }
+        verkaufenInput.value = 1; // Setze Menge zurück auf 1 nach Handel
+    }
+
+    document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`;
 
     aktualisiereSpielerStatusAnzeige(); // Gold/XP/Ladekapazität aktualisieren
   }
@@ -696,7 +760,6 @@
             ladungsDetails: {}
         });
     }
-
 
     // Setze die initiale Ansicht und den Spielerstatus
     aktualisiereSpielerStatusAnzeige();
