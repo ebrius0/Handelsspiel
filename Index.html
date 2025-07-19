@@ -36,7 +36,7 @@
     #karte {
       width: 100%;
       height: 400px;
-      background: #cceeff; /* Blauer Hintergrund für Wasser/Meer */
+      background: #cceeff; /* Blauer Hintergrund für Wasser/Meer, wird vom Bild überdeckt */
     }
     #inhalt {
       padding: 20px;
@@ -82,6 +82,13 @@
     button:hover {
       background: #45a049;
     }
+    input[type="number"] {
+        width: 60px;
+        padding: 5px;
+        margin-right: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -102,11 +109,12 @@
   <p>Gold: <span id="goldAnzeige"></span></p>
   <p>Level: <span id="levelAnzeige"></span> (<span id="xpAnzeige"></span> XP)</p>
   <p>Aktuelle Stadt: <span id="aktuelleStadtAnzeige">Keine</span></p>
+  <p>Ladekapazität: <span id="ladekapazitaetAnzeige"></span></p>
 </div>
 
 <svg id="karte" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
   <rect width="1000" height="600" fill="#cceeff" />
-  <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/refs/heads/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
+  <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
 </svg>
 
 <div id="inhalt">
@@ -116,89 +124,88 @@
 <script>
   // --- SPIELERDATEN ---
   const SPIELER_DATEN = {
-    gold: 500,
+    gold: 5000, // Startkapital erhöht für besseres Testen
     level: 1,
     xp: 0,
     aktuelleStadt: null,
-    schiffeBesitz: [],
-    inventar: {},
-    gebaeude: {}
+    schiffeBesitz: [], // Hier speichern wir Schiffe, die der Spieler besitzt
+    inventar: {}, // z.B. { 'Getreide': 10, 'Holz': 5 } - gesamt über alle Schiffe
+    gebaeude: {} // z.B. { 'Elandor': { 'Lagerhaus': 1 } }
   };
 
   // --- STÄDTEDATEN ---
+  // Koordinaten sind Platzhalter und MÜSSEN manuell an deine gewählte Karte angepasst werden!
   const STAEDTE = {
-    'Elandor': { x: 200, y: 150, einwohner: 1000, versorgung: 'Gut',
+    'Küstenstadt A': { x: 150, y: 100, einwohner: 1000, versorgung: 'Gut',
       gueter: {
-        'Getreide': { preis: 12, lager: 50 },
-        'Holz': { preis: 18, lager: 30 },
-        'Käse': { preis: 24, lager: 15 }
+        'Fisch': { basisPreis: 12, lager: 50, produktionsFaktor: 0.8 }, // Produziert Fisch (günstiger verkauft)
+        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 1.0 }  // Standardpreis
       }
     },
-    'Nandor': { x: 300, y: 100, einwohner: 950, versorgung: 'Mittel',
+    'Küstenstadt B': { x: 300, y: 80, einwohner: 950, versorgung: 'Mittel',
       gueter: {
-        'Getreide': { preis: 15, lager: 40 },
-        'Tuch': { preis: 25, lager: 20 },
-        'Eisen': { preis: 35, lager: 10 }
+        'Holz': { basisPreis: 15, lager: 40, produktionsFaktor: 0.9 },
+        'Tuch': { basisPreis: 25, lager: 20, produktionsFaktor: 1.0 }
       }
     },
-    'Thorwald': { x: 400, y: 200, einwohner: 1100, versorgung: 'Sehr Gut',
+    'Küstenstadt C': { x: 450, y: 120, einwohner: 1100, versorgung: 'Sehr Gut',
       gueter: {
-        'Holz': { preis: 16, lager: 60 },
-        'Fleisch': { preis: 20, lager: 30 }
+        'Wein': { basisPreis: 20, lager: 30, produktionsFaktor: 0.85 },
+        'Getreide': { basisPreis: 16, lager: 60, produktionsFaktor: 0.9 }
       }
     },
-    'Altdorf': { x: 250, y: 250, einwohner: 800, versorgung: 'Schlecht',
+    'Küstenstadt D': { x: 600, y: 150, einwohner: 800, versorgung: 'Schlecht',
       gueter: {
-        'Getreide': { preis: 10, lager: 70 },
-        'Wein': { preis: 30, lager: 10 }
+        'Eisen': { basisPreis: 30, lager: 10, produktionsFaktor: 1.0 },
+        'Werkzeuge': { basisPreis: 40, lager: 12, produktionsFaktor: 1.1 } // Benötigt Werkzeuge (teurer verkauft)
       }
     },
-    'Lunaris': { x: 600, y: 180, einwohner: 1300, versorgung: 'Gut',
+    'Küstenstadt E': { x: 750, y: 200, einwohner: 1300, versorgung: 'Gut',
       gueter: {
-        'Silber': { preis: 50, lager: 5 },
-        'Juwelen': { preis: 100, lager: 2 }
+        'Silber': { basisPreis: 50, lager: 5, produktionsFaktor: 0.8 },
+        'Juwelen': { basisPreis: 100, lager: 2, produktionsFaktor: 0.9 }
       }
     },
-    'Vandral': { x: 700, y: 120, einwohner: 900, versorgung: 'Mittel',
+    'Küstenstadt F': { x: 880, y: 300, einwohner: 900, versorgung: 'Mittel',
       gueter: {
-        'Holz': { preis: 17, lager: 45 },
-        'Felle': { preis: 28, lager: 15 }
+        'Gewürze': { basisPreis: 60, lager: 7, produktionsFaktor: 0.85 },
+        'Seide': { basisPreis: 80, lager: 5, produktionsFaktor: 0.9 }
       }
     },
-    'Stormheim': { x: 850, y: 300, einwohner: 1500, versorgung: 'Hervorragend',
+    'Küstenstadt G': { x: 800, y: 450, einwohner: 1500, versorgung: 'Hervorragend',
       gueter: {
-        'Waffen': { preis: 70, lager: 8 },
-        'Rüstungen': { preis: 90, lager: 4 }
+        'Waffen': { basisPreis: 70, lager: 8, produktionsFaktor: 0.9 },
+        'Rüstungen': { basisPreis: 90, lager: 4, produktionsFaktor: 0.9 }
       }
     },
-    'Goldfurt': { x: 770, y: 400, einwohner: 1200, versorgung: 'Gut',
+    'Küstenstadt H': { x: 650, y: 520, einwohner: 1200, versorgung: 'Gut',
       gueter: {
-        'Gold': { preis: 120, lager: 3 },
-        'Werkzeuge': { preis: 40, lager: 12 }
+        'Gold': { basisPreis: 120, lager: 3, produktionsFaktor: 0.8 },
+        'Kräuter': { basisPreis: 22, lager: 25, produktionsFaktor: 1.0 }
       }
     },
-    'Wasserthal': { x: 650, y: 500, einwohner: 700, versorgung: 'Mittel',
+    'Flussstadt A': { x: 350, y: 300, einwohner: 700, versorgung: 'Mittel',
       gueter: {
-        'Fisch': { preis: 10, lager: 60 },
-        'Kräuter': { preis: 22, lager: 25 }
+        'Getreide': { basisPreis: 10, lager: 60, produktionsFaktor: 0.8 },
+        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 }
       }
     },
-    'Nebelstein': { x: 480, y: 450, einwohner: 900, versorgung: 'Schlecht',
+    'Flussstadt B': { x: 550, y: 400, einwohner: 900, versorgung: 'Schlecht',
       gueter: {
-        'Erz': { preis: 30, lager: 20 },
-        'Kohle': { preis: 20, lager: 30 }
+        'Kohle': { basisPreis: 20, lager: 30, produktionsFaktor: 0.85 },
+        'Erz': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 }
       }
     },
-    'Bergheim': { x: 150, y: 400, einwohner: 600, versorgung: 'Sehr Schlecht',
+    'Inselstadt 1': { x: 100, y: 450, einwohner: 600, versorgung: 'Sehr Schlecht',
       gueter: {
-        'Mineralien': { preis: 45, lager: 10 },
-        'Steine': { preis: 15, lager: 50 }
+        'Exotische Früchte': { basisPreis: 45, lager: 10, produktionsFaktor: 0.9 },
+        'Muscheln': { basisPreis: 15, lager: 50, produktionsFaktor: 0.8 }
       }
     },
-    'Inselstadt': { x: 300, y: 500, einwohner: 1000, versorgung: 'Gut',
+    'Inselstadt 2': { x: 900, y: 100, einwohner: 1000, versorgung: 'Gut',
       gueter: {
-        'Gewürze': { preis: 60, lager: 7 },
-        'Seide': { preis: 80, lager: 5 }
+        'Perlen': { basisPreis: 60, lager: 7, produktionsFaktor: 0.8 },
+        'Rum': { basisPreis: 80, lager: 5, produktionsFaktor: 0.9 }
       }
     }
   };
@@ -218,6 +225,51 @@
   };
 
   // --- SPIELLOGIK FUNKTIONEN ---
+
+  /**
+   * Berechnet den aktuellen Verkaufspreis einer Ware in einer Stadt.
+   * Der Preis schwankt leicht und wird durch den Produktionsfaktor der Stadt beeinflusst.
+   * @param {string} stadtName - Name der Stadt.
+   * @param {string} wareName - Name der Ware.
+   * @returns {number} Aktueller Preis.
+   */
+  function berechneAktuellenPreis(stadtName, wareName) {
+    const stadt = STAEDTE[stadtName];
+    const wareDaten = stadt.gueter[wareName];
+    if (!wareDaten) return 0; // Ware nicht in dieser Stadt verfügbar
+
+    let preis = wareDaten.basisPreis * (wareDaten.produktionsFaktor || 1.0); // Standard 1.0 wenn kein Faktor definiert
+
+    // Einfache Zufallsschwankung (+/- 10% des Basispreises)
+    const schwankung = Math.floor(Math.random() * (wareDaten.basisPreis * 0.2)) - (wareDaten.basisPreis * 0.1);
+    preis += schwankung;
+
+    return Math.max(1, Math.round(preis)); // Preis muss mindestens 1 sein und ganzzahlig
+  }
+
+  /**
+   * Gibt die gesamte verfügbare Ladekapazität des Spielers zurück (summiert über alle Schiffe).
+   * @returns {number} Freie Ladekapazität.
+   */
+  function getGesamtLadekapazitaet() {
+    let gesamtKapazitaet = 0;
+    SPIELER_DATEN.schiffeBesitz.forEach(schiff => {
+      gesamtKapazitaet += schiff.kapazitaet;
+    });
+    return gesamtKapazitaet;
+  }
+
+  /**
+   * Gibt die aktuell genutzte Ladekapazität des Spielers zurück.
+   * @returns {number} Genutzte Ladekapazität.
+   */
+  function getAktuelleLadungsmenge() {
+    let aktuelleLadung = 0;
+    for (const wareName in SPIELER_DATEN.inventar) {
+      aktuelleLadung += SPIELER_DATEN.inventar[wareName];
+    }
+    return aktuelleLadung;
+  }
 
   /**
    * Wählt eine Stadt aus und aktualisiert die Ansicht.
@@ -256,17 +308,23 @@
       case 'handel':
         htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Handel</h2>
           <table>
-            <tr><th>Ware</th><th>Preis</th><th>Lager</th><th>Aktion</th></tr>`;
+            <tr><th>Ware</th><th>Preis</th><th>Stadt-Lager</th><th>Deine Menge</th><th colspan="2">Aktion</th></tr>`;
         for (const wareName in aktuelleStadtDaten.gueter) {
+          const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName); // Dynamischer Preis
           const ware = aktuelleStadtDaten.gueter[wareName];
           htmlInhalt += `
               <tr>
                 <td>${wareName}</td>
-                <td>${ware.preis} Gold</td>
-                <td>${ware.lager}</td>
+                <td id="preis_${wareName}">${preis} Gold</td>
+                <td id="stadtLager_${wareName}">${ware.lager}</td>
+                <td id="spielerMenge_${wareName}">${SPIELER_DATEN.inventar[wareName] || 0}</td>
                 <td>
-                  <button onclick="handelWare('${wareName}', ${ware.preis}, 'kaufen')">Kaufen</button>
-                  <button onclick="handelWare('${wareName}', ${ware.preis}, 'verkaufen')">Verkaufen</button>
+                  <input type="number" id="mengeKaufen_${wareName}" value="1" min="1" max="${ware.lager}" style="width: 60px;">
+                  <button onclick="handelWare('${wareName}', 'kaufen')">Kaufen</button>
+                </td>
+                <td>
+                  <input type="number" id="mengeVerkaufen_${wareName}" value="1" min="1" max="${SPIELER_DATEN.inventar[wareName] || 0}" style="width: 60px;">
+                  <button onclick="handelWare('${wareName}', 'verkaufen')">Verkaufen</button>
                 </td>
               </tr>`;
         }
@@ -344,34 +402,64 @@
   /**
    * Führt einen Kauf oder Verkauf einer Ware aus.
    * @param {string} wareName - Der Name der Ware.
-   * @param {number} preis - Der Preis der Ware.
    * @param {'kaufen'|'verkaufen'} aktion - Die Aktion (kaufen oder verkaufen).
    */
-  function handelWare(wareName, preis, aktion) {
+  function handelWare(wareName, aktion) {
     const aktuelleStadtDaten = STAEDTE[SPIELER_DATEN.aktuelleStadt];
+    const wareInStadt = aktuelleStadtDaten.gueter[wareName];
+
+    let mengeInputId = (aktion === 'kaufen') ? `mengeKaufen_${wareName}` : `mengeVerkaufen_${wareName}`;
+    let menge = parseInt(document.getElementById(mengeInputId).value);
+
+    if (isNaN(menge) || menge <= 0) {
+      alert('Bitte gib eine gültige Menge ein (mindestens 1).');
+      return;
+    }
+
+    const preisProEinheit = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+    const gesamtPreis = preisProEinheit * menge;
 
     if (aktion === 'kaufen') {
-      if (SPIELER_DATEN.gold >= preis && aktuelleStadtDaten.gueter[wareName].lager > 0) {
-        SPIELER_DATEN.gold -= preis;
-        aktuelleStadtDaten.gueter[wareName].lager--;
-        SPIELER_DATEN.inventar[wareName] = (SPIELER_DATEN.inventar[wareName] || 0) + 1;
-        aktualisiereXP(5);
-        alert(`1 ${wareName} für ${preis} Gold gekauft.`);
-      } else {
-        alert('Nicht genug Gold oder Ware in der Stadt nicht verfügbar!');
+      if (SPIELER_DATEN.gold < gesamtPreis) {
+        alert('Nicht genug Gold!');
+        return;
       }
+      if (wareInStadt.lager < menge) {
+        alert('Stadt hat nicht genug Waren auf Lager!');
+        return;
+      }
+      if (getAktuelleLadungsmenge() + menge > getGesamtLadekapazitaet()) {
+          alert(`Nicht genug Ladekapazität! Du hast ${getAktuelleLadungsmenge()} / ${getGesamtLadekapazitaet()} belegt.`);
+          return;
+      }
+
+      SPIELER_DATEN.gold -= gesamtPreis;
+      wareInStadt.lager -= menge;
+      SPIELER_DATEN.inventar[wareName] = (SPIELER_DATEN.inventar[wareName] || 0) + menge;
+      aktualisiereXP(5 * menge); // Mehr XP für größere Mengen
+      alert(`${menge} ${wareName} für ${gesamtPreis} Gold gekauft.`);
+
     } else if (aktion === 'verkaufen') {
-      if (SPIELER_DATEN.inventar[wareName] && SPIELER_DATEN.inventar[wareName] > 0) {
-        SPIELER_DATEN.gold += preis;
-        aktuelleStadtDaten.gueter[wareName].lager++;
-        SPIELER_DATEN.inventar[wareName]--;
-        aktualisiereXP(5);
-        alert(`1 ${wareName} für ${preis} Gold verkauft.`);
-      } else {
-        alert('Diese Ware ist nicht in deinem Inventar!');
+      if (!SPIELER_DATEN.inventar[wareName] || SPIELER_DATEN.inventar[wareName] < menge) {
+        alert('Du hast nicht genug dieser Ware in deinem Inventar!');
+        return;
       }
+
+      SPIELER_DATEN.gold += gesamtPreis;
+      wareInStadt.lager += menge;
+      SPIELER_DATEN.inventar[wareName] -= menge;
+      aktualisiereXP(5 * menge);
+      alert(`${menge} ${wareName} für ${gesamtPreis} Gold verkauft.`);
     }
-    zeigeMenue('handel'); // Menü aktualisieren, um Änderungen anzuzeigen
+
+    // Aktualisiere die Anzeigen direkt, ohne das ganze Menü neu zu rendern
+    document.getElementById(`stadtLager_${wareName}`).textContent = wareInStadt.lager;
+    document.getElementById(`spielerMenge_${wareName}`).textContent = SPIELER_DATEN.inventar[wareName];
+    document.getElementById(`mengeKaufen_${wareName}`).setAttribute('max', wareInStadt.lager);
+    document.getElementById(`mengeVerkaufen_${wareName}`).setAttribute('max', SPIELER_DATEN.inventar[wareName]);
+    document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`; // Preis könnte sich nach Handel ändern
+
+    aktualisiereSpielerStatusAnzeige(); // Gold/XP/Ladekapazität aktualisieren
   }
 
   /**
@@ -452,6 +540,7 @@
     document.getElementById('levelAnzeige').textContent = SPIELER_DATEN.level;
     document.getElementById('xpAnzeige').textContent = SPIELER_DATEN.xp;
     document.getElementById('aktuelleStadtAnzeige').textContent = SPIELER_DATEN.aktuelleStadt || 'Keine';
+    document.getElementById('ladekapazitaetAnzeige').textContent = `${getAktuelleLadungsmenge()} / ${getGesamtLadekapazitaet()}`;
   }
 
   // --- VISUELLE HILFSFUNKTIONEN ---
@@ -513,6 +602,15 @@
         stadtWaehlen(event.target.dataset.stadtName);
       });
     });
+
+    // Gib dem Spieler ein Startschiff, damit er Kapazität hat
+    SPIELER_DATEN.schiffeBesitz.push({
+        name: 'Schnigge',
+        kapazitaet: SCHIFFS_TYPEN.find(s => s.name === 'Schnigge').kapazitaet,
+        ladungsmenge: 0,
+        ladungsDetails: {}
+    });
+
 
     // Setze die initiale Ansicht und den Spielerstatus
     aktualisiereSpielerStatusAnzeige();
