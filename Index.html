@@ -319,15 +319,86 @@
         'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
         'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
       }
+  // --- STÄDTEDATEN ---
+  const STAEDTE = {
+    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/3',
+      gueter: {
+        'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 },
+        'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
+        'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
+      }
     },
-    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht', stadtkarte: 'https://via.placeholder.com/800x450/Gezeitenruh?text=Stadtkarte+Gezeitenruh',
+    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/5',
+      gueter: {
+        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
+        'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
+        'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
+      }
+    },
+    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/7',
+      gueter: {
+        'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 },
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
+        'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
+      }
+    },
+    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/2',
+      gueter: {
+        'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
+        'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
+      }
+    },
+    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend', stadtkarte: 'http://googleusercontent.com/generated_image_content/6',
+      gueter: {
+        'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 },
+        'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
+        'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 }
+      }
+    },
+    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/4',
+      gueter: {
+        'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
+        'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
+        'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 }
+      }
+    },
+    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/0',
+      gueter: {
+        'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 },
+        'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
+        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 }
+      }
+    },
+    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/1',
+      gueter: {
+        'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 },
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
+      }
+    },
+    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/8',
+      gueter: {
+        'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 },
+        'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
+        'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
+      }
+    },
+    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht', stadtkarte: 'http://googleusercontent.com/generated_image_content/9',
+      gueter: {
+        'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 },
+        'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
+        'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
+      }
+    },
+    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht', stadtkarte: 'http://googleusercontent.com/generated_image_content/10',
       gueter: {
         'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.8 },
         'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.8 },
         'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.9 }
       }
     },
-    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Wolkenfels?text=Stadtkarte+Wolkenfels',
+    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/11',
       gueter: {
         'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.75 },
         'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.8 },
@@ -335,6 +406,7 @@
       }
     }
   };
+
 
   const ALLE_WAREN = [
     'Getreide', 'Fisch', 'Wolle', 'Holz', 'Tuch', 'Wein', 'Silbererz', 'Eisen', 'Kohle',
