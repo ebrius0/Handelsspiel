@@ -33,10 +33,28 @@
     nav button:hover {
       background: #a97144;
     }
-    #karte {
+    /* Container für die Weltkarte und Stadtansicht */
+    #weltkarteContainer, #stadtansichtContainer {
+        margin: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fffdf7;
+        padding: 10px;
+        text-align: center;
+    }
+    #karte { /* Das SVG-Element für die Weltkarte */
       width: 100%;
       height: auto;
       display: block;
+    }
+    #stadtkarteBild { /* Das Bild für die Stadtkarte */
+        width: 100%;
+        height: auto;
+        max-width: 800px; /* Max-Breite für Stadtkarte */
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        display: block;
+        margin: 0 auto; /* Zentrieren */
     }
     #inhalt {
       padding: 20px;
@@ -148,6 +166,16 @@
     .loeschen-button:hover {
         background-color: #c82333; /* Dunkleres Rot */
     }
+    /* Stil für den Zurück-Button */
+    .zurueck-button {
+        background-color: #6c757d; /* Grau */
+        padding: 10px 20px; /* Größerer Padding */
+        font-size: 16px;
+        margin-bottom: 20px; /* Abstand nach unten */
+    }
+    .zurueck-button:hover {
+        background-color: #5a6268; /* Dunkleres Grau */
+    }
   </style>
 </head>
 <body>
@@ -173,9 +201,18 @@
   <p>Ladekapazität: <span id="ladekapazitaetAnzeige"></span></p>
 </div>
 
-<svg id="karte" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-  <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
-</svg>
+<div id="weltkarteContainer">
+    <h2>Weltkarte</h2>
+    <svg id="karte" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+      <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
+    </svg>
+</div>
+
+<div id="stadtansichtContainer" style="display: none;">
+    <h2 id="stadtansichtTitel"></h2>
+    <button class="zurueck-button" onclick="zeigeWeltkarte()">Zurück zur Landkarte</button>
+    <img id="stadtkarteBild" src="" alt="Stadtkarte">
+</div>
 
 <div id="inhalt">
   <p>Lade Spiel...</p>
@@ -194,7 +231,7 @@
     gebaeude: {}
   };
 
-  let SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN }; // Start mit einer Kopie der Initialdaten
+  let SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
 
   // --- RUF-RANG-DEFINITIONEN ---
   const RUF_RANG_DEFINITIONEN = {
@@ -213,84 +250,84 @@
 
   // --- STÄDTEDATEN ---
   const STAEDTE = {
-    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut',
+    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Aethelgard?text=Stadtkarte+Aethelgard', // Beispielbild
       gueter: {
         'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 },
         'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
         'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
       }
     },
-    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut',
+    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut', stadtkarte: 'https://via.placeholder.com/800x450/PortValerius?text=Stadtkarte+Port+Valerius',
       gueter: {
         'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
         'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
         'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
       }
     },
-    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel',
+    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Silberhafen?text=Stadtkarte+Silberhafen',
       gueter: {
         'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
         'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
       }
     },
-    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut',
+    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Ostwall?text=Stadtkarte+Ostwall',
       gueter: {
         'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
         'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
         'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
       }
     },
-    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend',
+    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend', stadtkarte: 'https://via.placeholder.com/800x450/Drachenbucht?text=Stadtkarte+Drachenbucht',
       gueter: {
         'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 },
         'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
         'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 }
       }
     },
-    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut',
+    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Sonnenkueste?text=Stadtkarte+Sonnenkueste',
       gueter: {
         'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
         'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
         'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 }
       }
     },
-    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel',
+    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Tidenfall?text=Stadtkarte+Tidenfall',
       gueter: {
         'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 },
         'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
         'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 }
       }
     },
-    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut',
+    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut', stadtkarte: 'https://via.placeholder.com/800x450/Sturmkap?text=Stadtkarte+Sturmkap',
       gueter: {
         'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 },
         'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
       }
     },
-    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel',
+    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Flussfurt?text=Stadtkarte+Flussfurt',
       gueter: {
         'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 },
         'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
         'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
       }
     },
-    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht',
+    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht', stadtkarte: 'https://via.placeholder.com/800x450/Auenbrueck?text=Stadtkarte+Auenbrueck',
       gueter: {
         'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 },
         'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
         'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
       }
     },
-    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht',
+    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht', stadtkarte: 'https://via.placeholder.com/800x450/Gezeitenruh?text=Stadtkarte+Gezeitenruh',
       gueter: {
         'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.8 },
         'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.8 },
         'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.9 }
       }
     },
-    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut',
+    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Wolkenfels?text=Stadtkarte+Wolkenfels',
       gueter: {
         'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.75 },
         'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.8 },
@@ -327,7 +364,7 @@
   function speichereSpielstand() {
     try {
       localStorage.setItem('handelsspiel_speicherstand', JSON.stringify(SPIELER_DATEN));
-      localStorage.setItem('handelsspiel_staedte_status', JSON.stringify(STAEDTE)); // Auch den Stadtstatus speichern
+      localStorage.setItem('handelsspiel_staedte_status', JSON.stringify(STAEDTE));
       console.log('Spielstand gespeichert!');
     } catch (e) {
       console.error('Fehler beim Speichern des Spielstands:', e);
@@ -344,14 +381,11 @@
       const savedCitiesData = localStorage.getItem('handelsspiel_staedte_status');
 
       if (savedPlayerData) {
-        // Spielerdaten laden
         const parsedPlayerData = JSON.parse(savedPlayerData);
-        // Spielerdaten mit Standardwerten mergen, falls neue Eigenschaften hinzugekommen sind
         SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN, ...parsedPlayerData };
         console.log('Spielerdaten geladen:', SPIELER_DATEN);
       } else {
         console.log('Kein Spieler-Spielstand gefunden. Starte neues Spiel.');
-        // Initiales Startschiff hinzufügen, wenn kein Spielstand geladen wurde
         SPIELER_DATEN.schiffeBesitz.push({
             name: 'Schnigge',
             kapazitaet: SCHIFFS_TYPEN.find(s => s.name === 'Schnigge').kapazitaet,
@@ -361,24 +395,22 @@
       }
 
       if (savedCitiesData) {
-        // Stadtstatus laden
         const parsedCitiesData = JSON.parse(savedCitiesData);
-        // Da STAEDTE eine Konstante ist, müssen wir ihre Eigenschaften aktualisieren
-        // Statt die gesamte Konstante neu zuzuweisen, aktualisieren wir die inneren Objekte
         for (const stadtName in parsedCitiesData) {
-            if (STAEDTE[stadtName]) { // Sicherstellen, dass die Stadt existiert
+            if (STAEDTE[stadtName]) {
                 for (const wareName in parsedCitiesData[stadtName].gueter) {
                     if (STAEDTE[stadtName].gueter[wareName]) {
-                        // Tiefe Kopie der Güterdaten, um Referenzen zu vermeiden
                         STAEDTE[stadtName].gueter[wareName] = { ...parsedCitiesData[stadtName].gueter[wareName] };
                     } else {
-                        // Wenn Ware in altem Spielstand nicht existiert, aber jetzt existiert, hinzufügen
                         STAEDTE[stadtName].gueter[wareName] = parsedCitiesData[stadtName].gueter[wareName];
                     }
                 }
-                // Auch andere Stadt-Eigenschaften wie einwohner etc. aktualisieren, falls gewünscht
                 STAEDTE[stadtName].einwohner = parsedCitiesData[stadtName].einwohner;
                 STAEDTE[stadtName].versorgung = parsedCitiesData[stadtName].versorgung;
+                // Wichtig: stadtkarte URL auch aktualisieren, falls sie im savedCitiesData wäre
+                if (parsedCitiesData[stadtName].stadtkarte) {
+                    STAEDTE[stadtName].stadtkarte = parsedCitiesData[stadtName].stadtkarte;
+                }
             }
         }
         console.log('Stadtstatus geladen.');
@@ -389,9 +421,9 @@
     } catch (e) {
       console.error('Fehler beim Laden des Spielstands:', e);
       alert('Fehler beim Laden des Spielstands. Es wird ein neues Spiel gestartet.');
-      // Bei Fehler: Setze Spielerdaten auf Initialwerte zurück
       SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
-      STAEDTE = { ...STAEDTE }; // Tief kopieren, falls STAEDTE dynamisch geändert wurde
+      // STAEDTE nicht neu initialisieren, da es eine Konstante ist.
+      // Die Stadtlager werden sich selbst reparieren, wenn sie genutzt werden.
     }
   }
 
@@ -402,8 +434,7 @@
     if (confirm('Möchtest du wirklich einen neuen Spielstand starten? Der aktuelle Fortschritt geht verloren!')) {
       localStorage.removeItem('handelsspiel_speicherstand');
       localStorage.removeItem('handelsspiel_staedte_status');
-      SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN }; // Setze Spielerdaten auf Initialwerte zurück
-      // Optional: Lade die Seite neu, um alles zu resetten
+      SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
       location.reload();
     }
   }
@@ -441,7 +472,6 @@
 
     const rufEinflussFaktor = SPIELER_DATEN.ruf * 0.01;
 
-    // Für Kaufpreis:
     if (SPIELER_DATEN.ruf > 0) {
         preis *= (1 - rufEinflussFaktor);
     } else if (SPIELER_DATEN.ruf < 0) {
@@ -476,15 +506,56 @@
   }
 
   /**
-   * Wählt eine Stadt aus und aktualisiert die Ansicht.
-   * @param {string} name - Der Name der ausgewählten Stadt.
+   * Wechselt von der Weltkarte zur Stadtansicht.
+   * @param {string} stadtName - Der Name der ausgewählten Stadt.
    */
-  function stadtWaehlen(name) {
-    SPIELER_DATEN.aktuelleStadt = name;
-    markiereAktuelleStadt(name);
+  function zeigeStadtkarte(stadtName) {
+    SPIELER_DATEN.aktuelleStadt = stadtName;
+    speichereSpielstand(); // Speichere die aktuelle Stadt
+
+    const weltkarteContainer = document.getElementById('weltkarteContainer');
+    const stadtansichtContainer = document.getElementById('stadtansichtContainer');
+    const stadtkarteBild = document.getElementById('stadtkarteBild');
+    const stadtansichtTitel = document.getElementById('stadtansichtTitel');
+
+    weltkarteContainer.style.display = 'none'; // Weltkarte ausblenden
+    stadtansichtContainer.style.display = 'block'; // Stadtansicht einblenden
+
+    stadtansichtTitel.textContent = `${stadtName} – Stadtansicht`;
+    // Setze das Bild der Stadtkarte
+    const stadtDaten = STAEDTE[stadtName];
+    if (stadtDaten && stadtDaten.stadtkarte) {
+        stadtkarteBild.src = stadtDaten.stadtkarte;
+    } else {
+        stadtkarteBild.src = 'https://via.placeholder.com/800x450/cccccc?text=Keine+Stadtkarte+verfügbar'; // Fallback
+    }
+
+    // Aktualisiere den Spielerstatus, um die aktuelle Stadt anzuzeigen
+    aktualisiereSpielerStatusAnzeige();
+
+    // Zeige direkt die Übersicht für die ausgewählte Stadt
     zeigeMenue('uebersicht');
-    speichereSpielstand(); // Spielstand speichern nach Stadtauswahl
   }
+
+  /**
+   * Wechselt von der Stadtansicht zurück zur Weltkarte.
+   */
+  function zeigeWeltkarte() {
+    SPIELER_DATEN.aktuelleStadt = null; // Spieler ist jetzt auf der Weltkarte
+    speichereSpielstand(); // Speichere den Zustand
+
+    const weltkarteContainer = document.getElementById('weltkarteContainer');
+    const stadtansichtContainer = document.getElementById('stadtansichtContainer');
+    const inhaltDiv = document.getElementById('inhalt');
+
+    stadtansichtContainer.style.display = 'none'; // Stadtansicht ausblenden
+    weltkarteContainer.style.display = 'block'; // Weltkarte einblenden
+
+    inhaltDiv.innerHTML = '<p>Wähle eine Stadt auf der Karte, um zu beginnen.</p>';
+    aktualisiereSpielerStatusAnzeige(); // Aktualisiere den Status ("Aktuelle Stadt: Keine")
+    markiereAktuelleStadt(null); // Entferne jegliche Markierung auf der Karte
+  }
+
 
   /**
    * Zeigt das gewählte Menü (Übersicht, Handel, Gebäude, Schiffe) an.
@@ -495,6 +566,8 @@
 
     aktualisiereSpielerStatusAnzeige();
 
+    // "Schiffe" Menü kann immer aufgerufen werden, auch ohne ausgewählte Stadt
+    // Aber Handel und Gebäude benötigen eine ausgewählte Stadt
     if (!SPIELER_DATEN.aktuelleStadt && menuepunkt !== 'schiffe') {
       inhaltDiv.innerHTML = '<p>Bitte zuerst eine Stadt auf der Karte auswählen!</p>';
       return;
@@ -505,9 +578,13 @@
 
     switch (menuepunkt) {
       case 'uebersicht':
-        htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Übersicht</h2>
-          <p>Einwohner: ${aktuelleStadtDaten.einwohner}</p>
-          <p>Versorgung: ${aktuelleStadtDaten.versorgung}</p>`;
+        if (aktuelleStadtDaten) {
+            htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Übersicht</h2>
+              <p>Einwohner: ${aktuelleStadtDaten.einwohner}</p>
+              <p>Versorgung: ${aktuelleStadtDaten.versorgung}</p>`;
+        } else {
+            htmlInhalt = '<p>Bitte wähle eine Stadt auf der Karte aus.</p>';
+        }
         break;
 
       case 'handel':
@@ -698,31 +775,28 @@
     document.getElementById(`stadtLager_${wareName}`).textContent = wareInStadt.lager;
     document.getElementById(`spielerMenge_${wareName}`).textContent = SPIELER_DATEN.inventar[wareName];
 
-    const neuerStadtLager = wareInStadt.lager;
-    const neuerSpielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
-
     const kaufenInput = document.getElementById(`mengeKaufen_${wareName}`);
     const kaufenButton = document.getElementById(`btnKaufen_${wareName}`);
     if (kaufenInput && kaufenButton) {
-        kaufenInput.setAttribute('max', neuerStadtLager);
-        kaufenInput.disabled = (neuerStadtLager <= 0);
-        kaufenButton.disabled = (neuerStadtLager <= 0);
+        kaufenInput.setAttribute('max', wareInStadt.lager);
+        kaufenInput.disabled = (wareInStadt.lager <= 0 || getAktuelleLadungsmenge() + 1 > getGesamtLadekapazitaet());
+        kaufenButton.disabled = (wareInStadt.lager <= 0 || getAktuelleLadungsmenge() + 1 > getGesamtLadekapazitaet());
         kaufenInput.value = 1;
     }
 
     const verkaufenInput = document.getElementById(`mengeVerkaufen_${wareName}`);
     const verkaufenButton = document.getElementById(`btnVerkaufen_${wareName}`);
     if (verkaufenInput && verkaufenButton) {
-        verkaufenInput.setAttribute('max', neuerSpielerMenge);
-        verkaufenInput.disabled = (neuerSpielerMenge <= 0);
-        verkaufenButton.disabled = (neuerSpielerMenge <= 0);
+        verkaufenInput.setAttribute('max', SPIELER_DATEN.inventar[wareName] || 0);
+        verkaufenInput.disabled = ((SPIELER_DATEN.inventar[wareName] || 0) <= 0);
+        verkaufenButton.disabled = ((SPIELER_DATEN.inventar[wareName] || 0) <= 0);
         verkaufenInput.value = 1;
     }
 
     document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`;
 
     aktualisiereSpielerStatusAnzeige();
-    speichereSpielstand(); // Spielstand speichern nach jeder Handelsaktion
+    speichereSpielstand();
   }
 
   /**
@@ -740,7 +814,7 @@
         SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt][gebaeudeName] = 1;
         aktualisiereXP(20);
         alert(`${gebaeudeName} in ${SPIELER_DATEN.aktuelleStadt} gebaut!`);
-        speichereSpielstand(); // Spielstand speichern nach Gebäudeaktion
+        speichereSpielstand();
       } else {
         alert(`Du hast bereits ein ${gebaeudeName} in ${SPIELER_DATEN.aktuelleStadt}.`);
       }
@@ -772,7 +846,7 @@
       });
       aktualisiereXP(50);
       alert(`${schiffName} gekauft!`);
-      speichereSpielstand(); // Spielstand speichern nach Schiffskauf
+      speichereSpielstand();
     } else if (SPIELER_DATEN.level < schiffTyp.levelNoetig) {
       alert(`Dein Level ist zu niedrig. Du benötigst Level ${schiffTyp.levelNoetig}, um ${schiffName} zu kaufen.`);
     } else {
@@ -794,7 +868,7 @@
       alert(`Herzlichen Glückwunsch! Du bist Level ${SPIELER_DATEN.level} aufgestiegen!`);
     }
     aktualisiereSpielerStatusAnzeige();
-    speichereSpielstand(); // Spielstand speichern nach XP-Update (Levelaufstieg)
+    speichereSpielstand();
   }
 
   /**
@@ -825,7 +899,7 @@
 
   /**
    * Markiert die ausgewählte Stadt auf der Karte visuell.
-   * @param {string} stadtName - Der Name der Stadt, die markiert werden soll.
+   * @param {string|null} stadtName - Der Name der Stadt, die markiert werden soll, oder null zum Entfernen.
    */
   function markiereAktuelleStadt(stadtName) {
     if (currentMarkedCity) {
@@ -833,26 +907,27 @@
         currentMarkedCity.setAttribute('r', '8');
     }
 
-    const neueStadtCircle = document.querySelector(`.stadt-button[data-stadt-name="${stadtName}"]`);
-    if (neueStadtCircle) {
-        neueStadtCircle.setAttribute('fill', '#ff0000');
-        neueStadtCircle.setAttribute('r', '12');
-        currentMarkedCity = neueStadtCircle;
+    if (stadtName) {
+        const neueStadtCircle = document.querySelector(`.stadt-button[data-stadt-name="${stadtName}"]`);
+        if (neueStadtCircle) {
+            neueStadtCircle.setAttribute('fill', '#ff0000');
+            neueStadtCircle.setAttribute('r', '12');
+            currentMarkedCity = neueStadtCircle;
+        }
+    } else {
+        currentMarkedCity = null; // Keine Stadt ist markiert
     }
   }
 
   // --- INITIALISIERUNG DES SPIELS ---
   document.addEventListener('DOMContentLoaded', () => {
-    // Zuerst versuchen, Spielstand zu laden
-    ladeSpielstand();
+    ladeSpielstand(); // Zuerst Spielstand laden
 
     const karteSVG = document.getElementById('karte');
 
     for (const stadtName in STAEDTE) {
       const stadtDaten = STAEDTE[stadtName];
 
-      // Initialisiere basisLager für jede Ware in jeder Stadt, wenn noch nicht geschehen
-      // Dies ist besonders wichtig, wenn ein Spielstand geladen wurde, der diese Eigenschaft noch nicht hatte.
       for (const wareName in stadtDaten.gueter) {
           if (typeof stadtDaten.gueter[wareName].basisLager === 'undefined') {
             stadtDaten.gueter[wareName].basisLager = stadtDaten.gueter[wareName].lager;
@@ -875,18 +950,19 @@
       karteSVG.appendChild(text);
     }
 
+    // Event Listener für die Stadtkreise, die jetzt zeigeStadtkarte aufrufen
     document.querySelectorAll('.stadt-button').forEach(button => {
       button.addEventListener('click', (event) => {
-        stadtWaehlen(event.target.dataset.stadtName);
+        zeigeStadtkarte(event.target.dataset.stadtName);
       });
     });
 
-    // Wenn ein Spielstand geladen wurde, dessen aktuelleStadt nicht null ist, markiere sie
+    // Initialisiere die Ansicht basierend auf dem geladenen Spielstand
     if (SPIELER_DATEN.aktuelleStadt) {
-        markiereAktuelleStadt(SPIELER_DATEN.aktuelleStadt);
-        zeigeMenue('uebersicht'); // Zeige die Übersicht der zuletzt besuchten Stadt
+        zeigeStadtkarte(SPIELER_DATEN.aktuelleStadt); // Gehe direkt zur Stadtansicht
     } else {
-        document.getElementById('inhalt').innerHTML = '<p>Wähle eine Stadt auf der Karte, um zu beginnen.</p>';
+        // Starte auf der Weltkarte
+        zeigeWeltkarte(); // Blendet Stadtkarte aus, zeigt Weltkarte an
     }
 
     aktualisiereSpielerStatusAnzeige();
