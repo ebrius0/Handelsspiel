@@ -219,3 +219,713 @@
     '-1': { name: 'Schmarotzer Händler', beschreibung: 'Man weiß nie, woran man bei ihm ist. Kleine Vergehen und das Ausnutzen von Notlagen sind ihm nicht fremd.' },
     '0': { name: 'Unbeachteter Händler', beschreibung: 'Ein durchschnittlicher Händler, der seine Geschäfte macht, ohne groß aufzufallen.' },
     '+1': { name: 'Redlicher Händler', beschreibung: 'Er ist bekannt für seine harte Arbeit und ehrlichen Handel. Ein solider Partner.' },
+    '+2': { name: 'Angesehener Händler', beschreibung: 'Sein Geschäft blüht, und er hat sich einen guten Namen gemacht. Man schätzt seine Anwesenheit in den Städten.' },
+    '+3': { name: 'Wohltäter Händler', beschreibung: 'Er trägt aktiv zum Wohlstand der Städte bei und hilft in Notlagen. Sein Ruf eilt ihm voraus.' },
+    '+4': { name: 'Edler Händler', beschreibung: 'Ein wahrer Meister des Handels, dessen Integrität und Reichtum sprichwörtlich sind. Seine Ankunft wird gefeiert.' },
+    '+5': { name: 'Königlicher Händler', beschreibung: 'Der Gipfel des Ansehens. Seine Handelsimperium ist legendär, und er genießt das Vertrauen und die Gunst der höchsten Adligen.' }
+  };
+
+  // --- STÄDTEDATEN (ohne spezifische "stadtkarte" URL, da nicht mehr verwendet) ---
+  const STAEDTE = {
+    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut',
+      gueter: {
+        'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 },
+        'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
+        'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
+      }
+    },
+    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut',
+      gueter: {
+        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
+        'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
+        'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
+      }
+    },
+    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel',
+      gueter: {
+        'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 },
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
+        'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
+      }
+    },
+    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut',
+      gueter: {
+        'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
+        'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
+      }
+    },
+    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend',
+      gueter: {
+        'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 },
+        'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
+        'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 }
+      }
+    },
+    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut',
+      gueter: {
+        'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
+        'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
+        'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 }
+      }
+    },
+    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel',
+      gueter: {
+        'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 },
+        'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
+        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 }
+      }
+    },
+    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut',
+      gueter: {
+        'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 },
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
+        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
+      }
+    },
+    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel',
+      gueter: {
+        'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 },
+        'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
+        'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
+      }
+    },
+    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht',
+      gueter: {
+        'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 },
+        'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
+        'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
+      }
+    },
+    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht',
+      gueter: {
+        'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.8 },
+        'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.8 },
+        'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.9 }
+      }
+    },
+    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut',
+      gueter: {
+        'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.75 },
+        'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.8 },
+        'Seide': { basisPreis: 80, lager: 7, produktionsFaktor: 0.9 }
+      }
+    }
+  };
+
+  const ALLE_WAREN = [
+    'Getreide', 'Fisch', 'Wolle', 'Holz', 'Tuch', 'Wein', 'Silbererz', 'Eisen', 'Kohle',
+    'Waffen', 'Rüstungen', 'Exotische Früchte', 'Juwelen', 'Gewürze', 'Kräuter',
+    'Salz', 'Leder', 'Seide', 'Rum', 'Tropische Hölzer', 'Perlen', 'Edelsteine'
+  ];
+
+  // --- SCHIFFS_TYPEN ---
+  const SCHIFFS_TYPEN = [
+    { name: 'Schnigge', levelNoetig: 1, kapazitaet: 50, preis: 500 },
+    { name: 'Kraier', levelNoetig: 10, kapazitaet: 150, preis: 2000 },
+    { name: 'Kogge', levelNoetig: 20, kapazitaet: 300, preis: 5000 },
+    { name: 'Holk', levelNoetig: 30, kapazitaet: 600, preis: 10000 }
+  ];
+
+  // --- GEBÄUDE_TYPEN (bleiben als Definitionen bestehen, aber ohne Bauplatzlogik) ---
+  const GEBAEUDE_TYPEN = {
+    'Lagerhaus': { kosten: 100, beschreibung: 'Erhöht Lagerplatz.' },
+    'Kontor': { kosten: 200, beschreibung: 'Ermöglicht Landhandel.' }
+  };
+
+  // --- SPIELLOGIK FUNKTIONEN ---
+
+  /**
+   * Speichert den aktuellen Spielstand im localStorage.
+   */
+  function speichereSpielstand() {
+    try {
+      localStorage.setItem('handelsspiel_speicherstand', JSON.stringify(SPIELER_DATEN));
+      localStorage.setItem('handelsspiel_staedte_status', JSON.stringify(STAEDTE));
+      console.log('Spielstand gespeichert!');
+    } catch (e) {
+      console.error('Fehler beim Speichern des Spielstands:', e);
+      alert('Fehler beim Speichern des Spielstands. Möglicherweise ist der Speicher voll.');
+    }
+  }
+
+  /**
+   * Lädt einen Spielstand aus dem localStorage.
+   */
+  function ladeSpielstand() {
+    try {
+      const savedPlayerData = localStorage.getItem('handelsspiel_speicherstand');
+      const savedCitiesData = localStorage.getItem('handelsspiel_staedte_status');
+
+      if (savedPlayerData) {
+        const parsedPlayerData = JSON.parse(savedPlayerData);
+        SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN, ...parsedPlayerData };
+        // Sicherstellen, dass gebaeude-Struktur existiert, aber leer ist
+        if (!SPIELER_DATEN.gebaeude) SPIELER_DATEN.gebaeude = {};
+        console.log('Spielerdaten geladen:', SPIELER_DATEN);
+      } else {
+        console.log('Kein Spieler-Spielstand gefunden. Starte neues Spiel.');
+        SPIELER_DATEN.schiffeBesitz.push({
+            name: 'Schnigge',
+            kapazitaet: SCHIFFS_TYPEN.find(s => s.name === 'Schnigge').kapazitaet,
+            ladungsmenge: 0,
+            ladungsDetails: {}
+        });
+      }
+
+      if (savedCitiesData) {
+        const parsedCitiesData = JSON.parse(savedCitiesData);
+        for (const stadtName in parsedCitiesData) {
+            if (STAEDTE[stadtName]) {
+                // Güterdaten aktualisieren
+                for (const wareName in parsedCitiesData[stadtName].gueter) {
+                    if (STAEDTE[stadtName].gueter[wareName]) {
+                        STAEDTE[stadtName].gueter[wareName] = { ...parsedCitiesData[stadtName].gueter[wareName] };
+                    } else {
+                        STAEDTE[stadtName].gueter[wareName] = parsedCitiesData[stadtName].gueter[wareName];
+                    }
+                }
+                // Basislager sicherstellen, falls es nicht in den Speicherdaten war
+                for (const wareName in STAEDTE[stadtName].gueter) {
+                    if (typeof STAEDTE[stadtName].gueter[wareName].basisLager === 'undefined') {
+                        STAEDTE[stadtName].gueter[wareName].basisLager = STAEDTE[stadtName].gueter[wareName].lager;
+                    }
+                }
+
+                STAEDTE[stadtName].einwohner = parsedCitiesData[stadtName].einwohner;
+                STAEDTE[stadtName].versorgung = parsedCitiesData[stadtName].versorgung;
+                // 'stadtkarte' Attribut nicht von Speicherstand überschreiben, da es in dieser Version nicht mehr dynamisch ist
+            }
+        }
+        console.log('Stadtstatus geladen.');
+      } else {
+        console.log('Kein Stadtstatus-Spielstand gefunden. Initialisiere Städte neu.');
+        // Stelle sicher, dass basisLager für neue Spiele korrekt gesetzt ist
+        for (const stadtName in STAEDTE) {
+            for (const wareName in STAEDTE[stadtName].gueter) {
+                if (typeof STAEDTE[stadtName].gueter[wareName].basisLager === 'undefined') {
+                    STAEDTE[stadtName].gueter[wareName].basisLager = STAEDTE[stadtName].gueter[wareName].lager;
+                }
+            }
+        }
+      }
+
+    } catch (e) {
+      console.error('Fehler beim Laden des Spielstands:', e);
+      alert('Fehler beim Laden des Spielstands. Es wird ein neues Spiel gestartet.');
+      SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
+      // Auch hier sicherstellen, dass basisLager für neue Spiele korrekt gesetzt ist
+      for (const stadtName in STAEDTE) {
+          for (const wareName in STAEDTE[stadtName].gueter) {
+              if (typeof STAEDTE[stadtName].gueter[wareName].basisLager === 'undefined') {
+                  STAEDTE[stadtName].gueter[wareName].basisLager = STAEDTE[stadtName].gueter[wareName].lager;
+              }
+          }
+      }
+    }
+  }
+
+  /**
+   * Löscht den Spielstand aus dem localStorage und startet ein neues Spiel.
+   */
+  function loescheSpielstand() {
+    if (confirm('Möchtest du wirklich einen neuen Spielstand starten? Der aktuelle Fortschritt geht verloren!')) {
+      localStorage.removeItem('handelsspiel_speicherstand');
+      localStorage.removeItem('handelsspiel_staedte_status');
+      SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
+      // Auch hier die Basiswerte der Städte für ein neues Spiel setzen
+      for (const stadtName in STAEDTE) {
+          for (const wareName in STAEDTE[stadtName].gueter) {
+              if (typeof STAEDTE[stadtName].gueter[wareName].basisLager === 'undefined') {
+                  STAEDTE[stadtName].gueter[wareName].basisLager = STAEDTE[stadtName].gueter[wareName].lager;
+              }
+          }
+      }
+      location.reload();
+    }
+  }
+
+
+  /**
+   * Berechnet den aktuellen Verkaufspreis einer Ware in einer Stadt.
+   * Der Preis schwankt leicht und wird durch den Produktionsfaktor der Stadt beeinflusst.
+   * Zusätzlich wird ein dynamischer Preismodifikator basierend auf dem aktuellen Lagerbestand angewendet.
+   * @param {string} stadtName - Name der Stadt.
+   * @param {string} wareName - Name der Ware.
+   * @returns {number} Aktueller Preis.
+   */
+  function berechneAktuellenPreis(stadtName, wareName) {
+    const stadt = STAEDTE[stadtName];
+    if (!stadt.gueter[wareName]) {
+        stadt.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
+    }
+    const wareDaten = stadt.gueter[wareName];
+
+    let preis = wareDaten.basisPreis * (wareDaten.produktionsFaktor || 1.0);
+
+    const maxLager = wareDaten.basisLager > 0 ? wareDaten.basisLager * 2 : 100;
+    const minLager = 0;
+
+    let lagerProzentsatz = (wareDaten.lager - minLager) / (maxLager - minLager);
+    lagerProzentsatz = Math.max(0, Math.min(1, lagerProzentsatz));
+
+    const preisModifikator = 1.5 - (lagerProzentsatz * 1.0);
+
+    preis *= preisModifikator;
+
+    const schwankung = Math.floor(Math.random() * (wareDaten.basisPreis * 0.1)) - (wareDaten.basisPreis * 0.05);
+    preis += schwankung;
+
+    const rufEinflussFaktor = SPIELER_DATEN.ruf * 0.01;
+
+    if (SPIELER_DATEN.ruf > 0) {
+        preis *= (1 - rufEinflussFaktor);
+    } else if (SPIELER_DATEN.ruf < 0) {
+        preis *= (1 - rufEinflussFaktor);
+    }
+
+    return Math.max(1, Math.round(preis));
+  }
+
+  /**
+   * Gibt die gesamte verfügbare Ladekapazität des Spielers zurück (summiert über alle Schiffe).
+   * @returns {number} Freie Ladekapazität.
+   */
+  function getGesamtLadekapazitaet() {
+    let gesamtKapazitaet = 0;
+    SPIELER_DATEN.schiffeBesitz.forEach(schiff => {
+      gesamtKapazitaet += schiff.kapazitaet;
+    });
+    return gesamtKapazitaet;
+  }
+
+  /**
+   * Gibt die aktuell genutzte Ladekapazität des Spielers zurück.
+   * @returns {number} Genutzte Ladekapazität.
+   */
+  function getAktuelleLadungsmenge() {
+    let aktuelleLadung = 0;
+    for (const wareName in SPIELER_DATEN.inventar) {
+      aktuelleLadung += SPIELER_DATEN.inventar[wareName];
+    }
+    return aktuelleLadung;
+  }
+
+  /**
+   * Wählt eine Stadt aus und zeigt ihre Details an.
+   * @param {string} stadtName - Der Name der ausgewählten Stadt.
+   */
+  function waehleStadt(stadtName) {
+    SPIELER_DATEN.aktuelleStadt = stadtName;
+    speichereSpielstand(); // Speichere die aktuelle Stadt
+
+    // Aktualisiere den Spielerstatus, um die aktuelle Stadt anzuzeigen
+    aktualisiereSpielerStatusAnzeige();
+
+    // Markiere die aktuelle Stadt auf der Weltkarte
+    markiereAktuelleStadt(stadtName);
+
+    // Zeige direkt die Übersicht für die ausgewählte Stadt
+    zeigeMenue('uebersicht');
+  }
+
+  /**
+   * Zeigt das gewählte Menü (Übersicht, Handel, Gebäude, Schiffe) an.
+   * @param {string} menuepunkt - Der Name des Menüpunkts.
+   */
+  function zeigeMenue(menuepunkt) {
+    const inhaltDiv = document.getElementById('inhalt');
+
+    aktualisiereSpielerStatusAnzeige();
+
+    // "Schiffe" Menü kann immer aufgerufen werden, auch ohne ausgewählte Stadt
+    // Aber Handel und Gebäude benötigen eine ausgewählte Stadt
+    if (!SPIELER_DATEN.aktuelleStadt && menuepunkt !== 'schiffe') {
+      inhaltDiv.innerHTML = '<p>Bitte zuerst eine Stadt auf der Karte auswählen!</p>';
+      return;
+    }
+
+    let htmlInhalt = '';
+    const aktuelleStadtDaten = SPIELER_DATEN.aktuelleStadt ? STAEDTE[SPIELER_DATEN.aktuelleStadt] : null;
+
+    switch (menuepunkt) {
+      case 'uebersicht':
+        if (aktuelleStadtDaten) {
+            htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Übersicht</h2>
+              <p>Einwohner: ${aktuelleStadtDaten.einwohner}</p>
+              <p>Versorgung: ${aktuelleStadtDaten.versorgung}</p>`;
+        } else {
+            htmlInhalt = '<p>Bitte wähle eine Stadt auf der Karte aus.</p>';
+        }
+        break;
+
+      case 'handel':
+        htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Handel</h2>
+          <table>
+            <tr><th>Ware</th><th>Preis</th><th>Stadt-Lager</th><th>Deine Menge</th><th colspan="2">Aktion</th></tr>`;
+
+        // Sicherstellen, dass alle Waren in der Stadt initialisiert sind
+        ALLE_WAREN.forEach(wareName => {
+            if (!aktuelleStadtDaten.gueter[wareName]) {
+                aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
+            }
+            if (typeof aktuelleStadtDaten.gueter[wareName].basisLager === 'undefined') {
+                aktuelleStadtDaten.gueter[wareName].basisLager = aktuelleStadtDaten.gueter[wareName].lager;
+            }
+        });
+
+        for (const wareName in aktuelleStadtDaten.gueter) { // Iteriere über Güter in der Stadt
+          const wareInStadt = aktuelleStadtDaten.gueter[wareName];
+          const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+          const spielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
+          const stadtLager = wareInStadt.lager;
+
+          const kannKaufen = (stadtLager > 0);
+          const kannVerkaufen = (spielerMenge > 0);
+
+          htmlInhalt += `
+              <tr>
+                <td>${wareName}</td>
+                <td id="preis_${wareName}">${preis} Gold</td>
+                <td id="stadtLager_${wareName}">${stadtLager}</td>
+                <td id="spielerMenge_${wareName}">${spielerMenge}</td>
+                <td>
+                  <input type="number" id="mengeKaufen_${wareName}" value="1" min="1" max="${stadtLager}" style="width: 60px;" ${kannKaufen ? '' : 'disabled'}>
+                  <button id="btnKaufen_${wareName}" onclick="handelWare('${wareName}', 'kaufen')" ${kannKaufen ? '' : 'disabled'}>Kaufen</button>
+                </td>
+                <td>
+                  <input type="number" id="mengeVerkaufen_${wareName}" value="1" min="1" max="${spielerMenge}" style="width: 60px;" ${kannVerkaufen ? '' : 'disabled'}>
+                  <button id="btnVerkaufen_${wareName}" onclick="handelWare('${wareName}', 'verkaufen')" ${kannVerkaufen ? '' : 'disabled'}>Verkaufen</button>
+                </td>
+              </tr>`;
+        }
+        htmlInhalt += `</table>
+        <h3>Dein Inventar:</h3>
+        <table>
+          <tr><th>Ware</th><th>Menge</th></tr>`;
+          let inventarLeer = true;
+          for (const wareName in SPIELER_DATEN.inventar) {
+            if (SPIELER_DATEN.inventar[wareName] > 0) {
+              htmlInhalt += `<tr><td>${wareName}</td><td>${SPIELER_DATEN.inventar[wareName]}</td></tr>`;
+              inventarLeer = false;
+            }
+          }
+          if (inventarLeer) {
+            htmlInhalt += `<tr><td colspan="2">Dein Inventar ist leer.</td></tr>`;
+          }
+          htmlInhalt += `</table>`;
+        break;
+
+      case 'gebaeude':
+        htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Gebäude</h2>
+                      <p>Hier könntest du später Gebäude bauen oder verwalten.</p>
+                      <h3>Verfügbare Gebäudetypen:</h3>
+                      <ul>`;
+        for (const gebaeudeName in GEBAEUDE_TYPEN) {
+            const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
+            htmlInhalt += `<li>${gebaeudeName}: ${gebaeudeTyp.beschreibung} (Kosten: ${gebaeudeTyp.kosten} Gold)</li>`;
+        }
+        htmlInhalt += `</ul>`;
+        htmlInhalt += `<h3>Deine gebauten Gebäude in ${SPIELER_DATEN.aktuelleStadt}:</h3>`;
+        const stadtGebaeude = SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] || {};
+        if (Object.keys(stadtGebaeude).length === 0) {
+            htmlInhalt += `<p>Du hast noch keine Gebäude in dieser Stadt gebaut.</p>`;
+        } else {
+            // Dies würde hier nur anzeigen, wenn du manuell Gebäude hinzufügen würdest,
+            // da es keine Bauplatzlogik mehr gibt
+            htmlInhalt += `<ul>`;
+            for (const gebaeudeKey in stadtGebaeude) {
+                htmlInhalt += `<li>${st.gebueadeKey}: ${stadtGebaeude[gebaueKey]}</li>`;
+            }
+            htmlInhalt += `</ul>`;
+        }
+        break;
+
+      case 'schiffe':
+        htmlInhalt = `<h2>Werft – Schiffe</h2>
+          <h3>Verfügbare Schiffstypen zum Kauf:</h3>
+          <div class="schiff-container">`;
+        SCHIFFS_TYPEN.forEach(schiff => {
+          const kannKaufen = SPIELER_DATEN.level >= schiff.levelNoetig && SPIELER_DATEN.gold >= schiff.preis;
+          htmlInhalt += `
+            <div class="schiff-karte">
+              <h3>${schiff.name}</h3>
+              <div class="schiff-info">
+                <p>Benötigtes Level: ${schiff.levelNoetig}</p>
+                <p>Kapazität: ${schiff.kapazitaet} Einheiten</p>
+                <p>Preis: ${schiff.preis} Gold</p>
+              </div>
+              <div class="schiff-aktionen">
+                <button class="kaufen-button" onclick="schiffKaufen('${schiff.name}', ${schiff.preis})" ${kannKaufen ? '' : 'disabled'}>
+                  ${kannKaufen ? 'Kaufen' : 'Nicht verfügbar'}
+                </button>
+              </div>
+            </div>`;
+        });
+        htmlInhalt += `</div>
+          <h3>Deine Schiffe:</h3>
+          <ul>`;
+        if (SPIELER_DATEN.schiffeBesitz.length === 0) {
+          htmlInhalt += `<li>Du besitzt noch keine Schiffe.</li>`;
+        } else {
+          SPIELER_DATEN.schiffeBesitz.forEach((schiff, index) => {
+            htmlInhalt += `<li>${schiff.name} (Kapazität: ${schiff.kapazitaet}, Beladen: ${schiff.ladungsmenge || 0})`;
+            htmlInhalt += `</li>`;
+          });
+        }
+        htmlInhalt += `</ul>`;
+        break;
+
+      default:
+        htmlInhalt = `<p>Ein unbekanntes Menü wurde aufgerufen.</p>`;
+    }
+    inhaltDiv.innerHTML = htmlInhalt;
+  }
+
+  /**
+   * Führt einen Kauf oder Verkauf einer Ware aus.
+   * Aktualisiert Stadtlager, Spielerinventar, Gold, XP und Ruf.
+   * @param {string} wareName - Der Name der Ware.
+   * @param {'kaufen'|'verkaufen'} aktion - Die Aktion (kaufen oder verkaufen).
+   */
+  function handelWare(wareName, aktion) {
+    const aktuelleStadtDaten = STAEDTE[SPIELER_DATEN.aktuelleStadt];
+    if (!aktuelleStadtDaten.gueter[wareName]) {
+        aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
+    }
+    const wareInStadt = aktuelleStadtDaten.gueter[wareName];
+
+    let mengeInputId = (aktion === 'kaufen') ? `mengeKaufen_${wareName}` : `mengeVerkaufen_${wareName}`;
+    let mengeElement = document.getElementById(mengeInputId);
+    let menge = parseInt(mengeElement.value);
+
+    if (isNaN(menge) || menge <= 0) {
+      alert('Bitte gib eine gültige Menge ein (mindestens 1).');
+      return;
+    }
+
+    const preisProEinheit = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+    const gesamtPreis = preisProEinheit * menge;
+
+    let rufAenderung = 0;
+
+    if (aktion === 'kaufen') {
+      if (SPIELER_DATEN.gold < gesamtPreis) {
+        alert('Nicht genug Gold!');
+        return;
+      }
+      if (wareInStadt.lager < menge) {
+        alert('Stadt hat nicht genug Waren auf Lager!');
+        return;
+      }
+      if (getAktuelleLadungsmenge() + menge > getGesamtLadekapazitaet()) {
+          alert(`Nicht genug Ladekapazität! Du hast ${getAktuelleLadungsmenge()} / ${getGesamtLadekapazitaet()} belegt.`);
+          return;
+      }
+
+      SPIELER_DATEN.gold -= gesamtPreis;
+      wareInStadt.lager -= menge;
+      SPIELER_DATEN.inventar[wareName] = (SPIELER_DATEN.inventar[wareName] || 0) + menge;
+      aktualisiereXP(5 * menge);
+      alert(`${menge} ${wareName} für ${gesamtPreis} Gold gekauft.`);
+
+      if (wareInStadt.lager < wareInStadt.basisLager * 0.5) {
+          rufAenderung -= Math.floor(menge / 10);
+      }
+
+    } else if (aktion === 'verkaufen') {
+      if (!SPIELER_DATEN.inventar[wareName] || SPIELER_DATEN.inventar[wareName] < menge) {
+        alert('Du hast nicht genug dieser Ware in deinem Inventar!');
+        return;
+      }
+
+      SPIELER_DATEN.gold += gesamtPreis;
+      wareInStadt.lager += menge;
+      SPIELER_DATEN.inventar[wareName] -= menge;
+      aktualisiereXP(5 * menge);
+      alert(`${menge} ${wareName} für ${gesamtPreis} Gold verkauft.`);
+
+      if (wareInStadt.lager < wareInStadt.basisLager * 0.5) {
+          rufAenderung += Math.floor(menge / 10);
+      } else if (wareInStadt.lager > wareInStadt.basisLager * 1.5) {
+          rufAenderung -= Math.floor(menge / 20);
+      }
+    }
+
+    SPIELER_DATEN.ruf = Math.max(-5, Math.min(5, SPIELER_DATEN.ruf + rufAenderung));
+
+    document.getElementById(`stadtLager_${wareName}`).textContent = wareInStadt.lager;
+    document.getElementById(`spielerMenge_${wareName}`).textContent = SPIELER_DATEN.inventar[wareName];
+
+    const kaufenInput = document.getElementById(`mengeKaufen_${wareName}`);
+    const kaufenButton = document.getElementById(`btnKaufen_${wareName}`);
+    if (kaufenInput && kaufenButton) {
+        kaufenInput.setAttribute('max', wareInStadt.lager);
+        kaufenInput.disabled = (wareInStadt.lager <= 0 || getAktuelleLadungsmenge() + 1 > getGesamtLadekapazitaet());
+        kaufenButton.disabled = (wareInStadt.lager <= 0 || getAktuelleLadungsmenge() + 1 > getGesamtLadekapazitaet());
+        kaufenInput.value = 1;
+    }
+
+    const verkaufenInput = document.getElementById(`mengeVerkaufen_${wareName}`);
+    const verkaufenButton = document.getElementById(`btnVerkaufen_${wareName}`);
+    if (verkaufenInput && verkaufenButton) {
+        verkaufenInput.setAttribute('max', SPIELER_DATEN.inventar[wareName] || 0);
+        verkaufenInput.disabled = ((SPIELER_DATEN.inventar[wareName] || 0) <= 0);
+        verkaufenButton.disabled = ((SPIELER_DATEN.inventar[wareName] || 0) <= 0);
+        verkaufenInput.value = 1;
+    }
+
+    document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`;
+
+    aktualisiereSpielerStatusAnzeige();
+    speichereSpielstand();
+  }
+
+  /**
+   * Kauft ein Schiff für den Spieler.
+   * @param {string} schiffName - Der Name des zu kaufenden Schiffstyps.
+   * @param {number} preis - Der Preis des Schiffes.
+   */
+  function schiffKaufen(schiffName, preis) {
+    const schiffTyp = SCHIFFS_TYPEN.find(s => s.name === schiffName);
+    if (!schiffTyp) {
+      alert('Unbekannter Schiffstyp!');
+      return;
+    }
+
+    if (SPIELER_DATEN.gold >= preis && SPIELER_DATEN.level >= schiffTyp.levelNoetig) {
+      SPIELER_DATEN.gold -= preis;
+      SPIELER_DATEN.schiffeBesitz.push({
+        name: schiffTyp.name,
+        kapazitaet: schiffTyp.kapazitaet,
+        ladungsmenge: 0,
+        ladungsDetails: {}
+      });
+      aktualisiereXP(50);
+      alert(`${schiffName} gekauft!`);
+      speichereSpielstand();
+    } else if (SPIELER_DATEN.level < schiffTyp.levelNoetig) {
+      alert(`Dein Level ist zu niedrig. Du benötigst Level ${schiffTyp.levelNoetig}, um ${schiffName} zu kaufen.`);
+    } else {
+      alert('Nicht genug Gold, um dieses Schiff zu kaufen!');
+    }
+    zeigeMenue('schiffe');
+  }
+
+  /**
+   * Fügt dem Spieler XP hinzu und prüft auf Levelaufstieg.
+   * @param {number} menge - Die Menge an XP, die hinzugefügt werden soll.
+   */
+  function aktualisiereXP(menge) {
+    SPIELER_DATEN.xp += menge;
+    const xpFuerNaechstesLevel = SPIELER_DATEN.level * 100;
+    if (SPIELER_DATEN.xp >= xpFuerNaechstesLevel) {
+      SPIELER_DATEN.level++;
+      SPIELER_DATEN.xp -= xpFuerNaechstesLevel;
+      alert(`Herzlichen Glückwunsch! Du bist Level ${SPIELER_DATEN.level} aufgestiegen!`);
+    }
+    aktualisiereSpielerStatusAnzeige();
+    speichereSpielstand();
+  }
+
+  /**
+   * Gibt den Ruf-Rang-Namen basierend auf dem Rufwert zurück.
+   * @param {number} rufValue - Der aktuelle Rufwert des Spielers.
+   * @returns {string} Der Name des Ruf-Rangs.
+   */
+  function getRufRangName(rufValue) {
+      const clampedRuf = Math.max(-5, Math.min(5, rufValue));
+      return RUF_RANG_DEFINITIONEN[clampedRuf.toString()].name;
+  }
+
+  /**
+   * Aktualisiert die Anzeige des Spielerstatus im HTML.
+   */
+  function aktualisiereSpielerStatusAnzeige() {
+    document.getElementById('goldAnzeige').textContent = SPIELER_DATEN.gold;
+    document.getElementById('levelAnzeige').textContent = SPIELER_DATEN.level;
+    document.getElementById('xpAnzeige').textContent = SPIELER_DATEN.xp;
+    document.getElementById('rufAnzeige').textContent = SPIELER_DATEN.ruf;
+    document.getElementById('rufRangAnzeige').textContent = getRufRangName(SPIELER_DATEN.ruf);
+    document.getElementById('aktuelleStadtAnzeige').textContent = SPIELER_DATEN.aktuelleStadt || 'Keine';
+    document.getElementById('ladekapazitaetAnzeige').textContent = `${getAktuelleLadungsmenge()} / ${getGesamtLadekapazitaet()}`;
+  }
+
+  // --- VISUELLE HILFSFUNKTIONEN ---
+  let currentMarkedCity = null;
+
+  /**
+   * Markiert die ausgewählte Stadt auf der Karte visuell.
+   * @param {string|null} stadtName - Der Name der Stadt, die markiert werden soll, oder null zum Entfernen.
+   */
+  function markiereAktuelleStadt(stadtName) {
+    if (currentMarkedCity) {
+        currentMarkedCity.setAttribute('fill', '#3366cc'); // Setzt alte Farbe zurück
+        currentMarkedCity.setAttribute('r', '8'); // Setzt alte Größe zurück
+    }
+
+    if (stadtName) {
+        const neueStadtCircle = document.querySelector(`.stadt-button[data-stadt-name="${stadtName}"]`);
+        if (neueStadtCircle) {
+            neueStadtCircle.setAttribute('fill', '#ff0000'); // Neue Farbe
+            neueStadtCircle.setAttribute('r', '12'); // Neue Größe
+            currentMarkedCity = neueStadtCircle;
+        }
+    } else {
+        currentMarkedCity = null; // Keine Stadt ist markiert
+    }
+  }
+
+  // --- INITIALISIERUNG DES SPIELS ---
+  document.addEventListener('DOMContentLoaded', () => {
+    ladeSpielstand(); // Zuerst Spielstand laden
+
+    const karteSVG = document.getElementById('karte');
+
+    for (const stadtName in STAEDTE) {
+      const stadtDaten = STAEDTE[stadtName];
+
+      // Sicherstellen, dass basisLager für bestehende Spielstände gesetzt ist
+      for (const wareName in stadtDaten.gueter) {
+          if (typeof stadtDaten.gueter[wareName].basisLager === 'undefined') {
+            stadtDaten.gueter[wareName].basisLager = stadtDaten.gueter[wareName].lager;
+          }
+      }
+
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('class', 'stadt-button');
+      circle.setAttribute('cx', stadtDaten.x);
+      circle.setAttribute('cy', stadtDaten.y);
+      circle.setAttribute('r', '8');
+      circle.dataset.stadtName = stadtName; // Speichert den Städtenamen im Dataset
+      karteSVG.appendChild(circle);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', stadtDaten.x + 10);
+      text.setAttribute('y', stadtDaten.y + 5);
+      text.textContent = stadtName;
+      text.style.pointerEvents = 'none'; // Damit der Klick auf den Kreis durchgeht
+      karteSVG.appendChild(text);
+    }
+
+    // Event Listener für die Stadtkreise
+    document.querySelectorAll('.stadt-button').forEach(button => {
+      button.addEventListener('click', (event) => {
+        waehleStadt(event.target.dataset.stadtName);
+      });
+    });
+
+    // Initialisiere die Ansicht basierend auf dem geladenen Spielstand
+    if (SPIELER_DATEN.aktuelleStadt) {
+        waehleStadt(SPIELER_DATEN.aktuelleStadt); // Setzt die Stadt und aktualisiert alles
+    } else {
+        // Falls noch keine Stadt ausgewählt ist, zeige die Übersicht ohne Stadtdetails
+        zeigeMenue('uebersicht');
+    }
+
+    aktualisiereSpielerStatusAnzeige();
+  });
+</script>
+
+</body>
+</html>
