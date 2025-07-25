@@ -47,15 +47,37 @@
       height: auto;
       display: block;
     }
-    #stadtkarteBild { /* Das Bild für die Stadtkarte */
+    #stadtkarteSVGContainer { /* Neuer Container für das SVG der Stadtkarte */
         width: 100%;
-        height: auto;
-        max-width: 800px; /* Max-Breite für Stadtkarte */
+        max-width: 800px;
+        margin: 0 auto;
         border: 1px solid #ccc;
         border-radius: 8px;
-        display: block;
-        margin: 0 auto; /* Zentrieren */
+        overflow: hidden; /* Stellt sicher, dass das SVG innerhalb des Rahmens bleibt */
     }
+    #stadtkarteSVG { /* Das SVG-Element für die Stadtkarte selbst */
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    /* Stil für die Bauplätze im SVG */
+    .bauplatz {
+        fill: rgba(0, 128, 0, 0.2); /* Semi-transparentes Grün */
+        stroke: green;
+        stroke-width: 2;
+        cursor: pointer;
+        transition: fill 0.2s, stroke 0.2s;
+    }
+    .bauplatz:hover {
+        fill: rgba(0, 200, 0, 0.4);
+        stroke: darkgreen;
+    }
+    .bauplatz.belegt {
+        fill: rgba(128, 128, 128, 0.5); /* Grau, wenn belegt */
+        stroke: grey;
+        cursor: not-allowed;
+    }
+
     #inhalt {
       padding: 20px;
       background: #fffdf7;
@@ -211,7 +233,8 @@
 <div id="stadtansichtContainer" style="display: none;">
     <h2 id="stadtansichtTitel"></h2>
     <button class="zurueck-button" onclick="zeigeWeltkarte()">Zurück zur Landkarte</button>
-    <img id="stadtkarteBild" src="" alt="Stadtkarte">
+    <div id="stadtkarteSVGContainer">
+        </div>
 </div>
 
 <div id="inhalt">
@@ -228,7 +251,7 @@
     aktuelleStadt: null,
     schiffeBesitz: [],
     inventar: {},
-    gebaeude: {}
+    gebaeude: {} // Format: { "StadtName": { "bauplatzId": "GebäudeName" } }
   };
 
   let SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
@@ -248,165 +271,156 @@
     '+5': { name: 'Königlicher Händler', beschreibung: 'Der Gipfel des Ansehens. Seine Handelsimperium ist legendär, und er genießt das Vertrauen und die Gunst der höchsten Adligen.' }
   };
 
-  // --- STÄDTEDATEN ---
+  // --- STÄDTEDATEN (mit tatsächlichen Bild-URLs für die Stadtkarten, die du in SVGs umwandeln müsstest) ---
   const STAEDTE = {
-    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Aethelgard?text=Stadtkarte+Aethelgard', // Beispielbild
+    'Aethelgard': {
+      x: 150, y: 120, einwohner: 1200, versorgung: 'Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/3', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 },
         'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
         'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
-      }
+      },
+      bauplaetze: [ // Beispiel-Bauplätze für Aethelgard
+        { id: 'bp1', x: 200, y: 250, width: 50, height: 50, belegtDurch: null },
+        { id: 'bp2', x: 300, y: 180, width: 60, height: 40, belegtDurch: null }
+      ]
     },
-    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut', stadtkarte: 'https://via.placeholder.com/800x450/PortValerius?text=Stadtkarte+Port+Valerius',
+    'Port Valerius': {
+      x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/5', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
         'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
         'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 100, y: 300, width: 70, height: 70, belegtDurch: null },
+        { id: 'bp2', x: 400, y: 150, width: 50, height: 50, belegtDurch: null }
+      ]
     },
-    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Silberhafen?text=Stadtkarte+Silberhafen',
+    'Silberhafen': {
+      x: 420, y: 95, einwohner: 900, versorgung: 'Mittel',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/7', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
         'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 250, y: 200, width: 80, height: 60, belegtDurch: null }
+      ]
     },
-    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Ostwall?text=Stadtkarte+Ostwall',
+    'Ostwall': {
+      x: 550, y: 130, einwohner: 1100, versorgung: 'Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/2', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
         'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
         'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 180, y: 350, width: 50, height: 50, belegtDurch: null },
+        { id: 'bp2', x: 320, y: 280, width: 60, height: 40, belegtDurch: null }
+      ]
     },
-    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend', stadtkarte: 'https://via.placeholder.com/800x450/Drachenbucht?text=Stadtkarte+Drachenbucht',
+    'Drachenbucht': {
+      x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/6', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 },
         'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
         'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 450, y: 100, width: 70, height: 70, belegtDurch: null }
+      ]
     },
-    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut', stadtkarte: 'https://via.placeholder.com/800x450/Sonnenkueste?text=Stadtkarte+Sonnenkueste',
+    'Sonnenküste': {
+      x: 850, y: 250, einwohner: 1050, versorgung: 'Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/4', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
         'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
         'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 150, y: 200, width: 50, height: 50, belegtDurch: null }
+      ]
     },
-    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Tidenfall?text=Stadtkarte+Tidenfall',
+    'Tidenfall': {
+      x: 880, y: 380, einwohner: 950, versorgung: 'Mittel',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/0', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 },
         'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
         'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 280, y: 120, width: 60, height: 40, belegtDurch: null }
+      ]
     },
-    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut', stadtkarte: 'https://via.placeholder.com/800x450/Sturmkap?text=Stadtkarte+Sturmkap',
+    'Sturmkap': {
+      x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/1', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 },
         'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 350, y: 300, width: 80, height: 60, belegtDurch: null }
+      ]
     },
-    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel', stadtkarte: 'https://via.placeholder.com/800x450/Flussfurt?text=Stadtkarte+Flussfurt',
+    'Flussfurt': {
+      x: 350, y: 350, einwohner: 700, versorgung: 'Mittel',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/8', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 },
         'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
         'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 200, y: 200, width: 50, height: 50, belegtDurch: null }
+      ]
     },
-    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht', stadtkarte: 'https://via.placeholder.com/800x450/Auenbrueck?text=Stadtkarte+Auenbrueck',
+    'Auenbrück': {
+      x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/9', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 },
         'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
         'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
-      }
-  // --- STÄDTEDATEN ---
-  const STAEDTE = {
-    'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/3',
-      gueter: {
-        'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.8 },
-        'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.9 },
-        'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.95 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 100, y: 100, width: 70, height: 70, belegtDurch: null }
+      ]
     },
-    'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/5',
-      gueter: {
-        'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.9 },
-        'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
-        'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
-      }
-    },
-    'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/7',
-      gueter: {
-        'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.8 },
-        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.9 },
-        'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.85 }
-      }
-    },
-    'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/2',
-      gueter: {
-        'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
-        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.95 },
-        'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
-      }
-    },
-    'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend', stadtkarte: 'http://googleusercontent.com/generated_image_content/6',
-      gueter: {
-        'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.8 },
-        'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
-        'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.1 }
-      }
-    },
-    'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/4',
-      gueter: {
-        'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.85 },
-        'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.9 },
-        'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.05 }
-      }
-    },
-    'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/0',
-      gueter: {
-        'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.8 },
-        'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
-        'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.85 }
-      }
-    },
-    'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/1',
-      gueter: {
-        'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.85 },
-        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 1.0 },
-        'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
-      }
-    },
-    'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel', stadtkarte: 'http://googleusercontent.com/generated_image_content/8',
-      gueter: {
-        'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.7 },
-        'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.8 },
-        'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.9 }
-      }
-    },
-    'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht', stadtkarte: 'http://googleusercontent.com/generated_image_content/9',
-      gueter: {
-        'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.75 },
-        'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.8 },
-        'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.9 }
-      }
-    },
-    'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht', stadtkarte: 'http://googleusercontent.com/generated_image_content/10',
+    'Gezeitenruh': {
+      x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/10', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.8 },
         'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.8 },
         'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.9 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 400, y: 200, width: 50, height: 50, belegtDurch: null }
+      ]
     },
-    'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut', stadtkarte: 'http://googleusercontent.com/generated_image_content/11',
+    'Wolkenfels': {
+      x: 920, y: 70, einwohner: 750, versorgung: 'Gut',
+      stadtkarte: 'http://googleusercontent.com/generated_image_content/11', // Dies müsste eine SVG-URL sein!
       gueter: {
         'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.75 },
         'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.8 },
         'Seide': { basisPreis: 80, lager: 7, produktionsFaktor: 0.9 }
-      }
+      },
+      bauplaetze: [
+        { id: 'bp1', x: 220, y: 300, width: 60, height: 40, belegtDurch: null }
+      ]
     }
   };
-
 
   const ALLE_WAREN = [
     'Getreide', 'Fisch', 'Wolle', 'Holz', 'Tuch', 'Wein', 'Silbererz', 'Eisen', 'Kohle',
@@ -422,10 +436,10 @@
     { name: 'Holk', levelNoetig: 30, kapazitaet: 600, preis: 10000 }
   ];
 
-  // --- GEBÄUDE_TYPEN ---
+  // --- GEBÄUDE_TYPEN (jetzt mit Bild-URLs und Größe) ---
   const GEBAEUDE_TYPEN = {
-    'Lagerhaus': { kosten: 100, beschreibung: 'Erhöht Lagerplatz.' },
-    'Kontor': { kosten: 200, beschreibung: 'Ermöglicht Landhandel.' }
+    'Lagerhaus': { kosten: 100, beschreibung: 'Erhöht Lagerplatz.', bild: 'https://via.placeholder.com/50x50/ADD8E6?text=Lager', groesse: { width: 50, height: 50 } },
+    'Kontor': { kosten: 200, beschreibung: 'Ermöglicht Landhandel.', bild: 'https://via.placeholder.com/60x40/FFD700?text=Kontor', groesse: { width: 60, height: 40 } }
   };
 
   // --- SPIELLOGIK FUNKTIONEN ---
@@ -455,6 +469,8 @@
       if (savedPlayerData) {
         const parsedPlayerData = JSON.parse(savedPlayerData);
         SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN, ...parsedPlayerData };
+        // Sicherstellen, dass gebaeude-Struktur existiert
+        if (!SPIELER_DATEN.gebaeude) SPIELER_DATEN.gebaeude = {};
         console.log('Spielerdaten geladen:', SPIELER_DATEN);
       } else {
         console.log('Kein Spieler-Spielstand gefunden. Starte neues Spiel.');
@@ -470,6 +486,7 @@
         const parsedCitiesData = JSON.parse(savedCitiesData);
         for (const stadtName in parsedCitiesData) {
             if (STAEDTE[stadtName]) {
+                // Güterdaten aktualisieren
                 for (const wareName in parsedCitiesData[stadtName].gueter) {
                     if (STAEDTE[stadtName].gueter[wareName]) {
                         STAEDTE[stadtName].gueter[wareName] = { ...parsedCitiesData[stadtName].gueter[wareName] };
@@ -477,25 +494,49 @@
                         STAEDTE[stadtName].gueter[wareName] = parsedCitiesData[stadtName].gueter[wareName];
                     }
                 }
+                // Basislager sicherstellen, falls es nicht in den Speicherdaten war
+                for (const wareName in STAEDTE[stadtName].gueter) {
+                    if (typeof STAEDTE[stadtName].gueter[wareName].basisLager === 'undefined') {
+                        STAEDTE[stadtName].gueter[wareName].basisLager = STAEDTE[stadtName].gueter[wareName].lager;
+                    }
+                }
+
                 STAEDTE[stadtName].einwohner = parsedCitiesData[stadtName].einwohner;
                 STAEDTE[stadtName].versorgung = parsedCitiesData[stadtName].versorgung;
-                // Wichtig: stadtkarte URL auch aktualisieren, falls sie im savedCitiesData wäre
-                if (parsedCitiesData[stadtName].stadtkarte) {
-                    STAEDTE[stadtName].stadtkarte = parsedCitiesData[stadtName].stadtkarte;
+                // stadtkarte URL nicht von Speicherstand überschreiben, da sie statisch ist
+                // STAEDTE[stadtName].stadtkarte = parsedCitiesData[stadtName].stadtkarte;
+
+                // Bauplätze aktualisieren, falls im Speicherstand vorhanden
+                if (parsedCitiesData[stadtName].bauplaetze) {
+                    STAEDTE[stadtName].bauplaetze = parsedCitiesData[stadtName].bauplaetze;
+                } else { // Wenn keine Bauplätze gespeichert, initialisiere sie
+                    if (STAEDTE[stadtName].bauplaetze) {
+                        STAEDTE[stadtName].bauplaetze.forEach(bp => bp.belegtDurch = null);
+                    }
                 }
             }
         }
         console.log('Stadtstatus geladen.');
       } else {
         console.log('Kein Stadtstatus-Spielstand gefunden. Initialisiere Städte neu.');
+        // Stelle sicher, dass Bauplätze im STAEDTE-Objekt initial leer sind
+        for (const stadtName in STAEDTE) {
+            if (STAEDTE[stadtName].bauplaetze) {
+                STAEDTE[stadtName].bauplaetze.forEach(bp => bp.belegtDurch = null);
+            }
+        }
       }
 
     } catch (e) {
       console.error('Fehler beim Laden des Spielstands:', e);
       alert('Fehler beim Laden des Spielstands. Es wird ein neues Spiel gestartet.');
       SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
-      // STAEDTE nicht neu initialisieren, da es eine Konstante ist.
-      // Die Stadtlager werden sich selbst reparieren, wenn sie genutzt werden.
+      // STAEDTE nicht neu initialisieren, aber Bauplätze zurücksetzen
+      for (const stadtName in STAEDTE) {
+          if (STAEDTE[stadtName].bauplaetze) {
+              STAEDTE[stadtName].bauplaetze.forEach(bp => bp.belegtDurch = null);
+          }
+      }
     }
   }
 
@@ -507,6 +548,12 @@
       localStorage.removeItem('handelsspiel_speicherstand');
       localStorage.removeItem('handelsspiel_staedte_status');
       SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
+      // Auch hier die Bauplätze in den STAEDTE-Daten zurücksetzen
+      for (const stadtName in STAEDTE) {
+          if (STAEDTE[stadtName].bauplaetze) {
+              STAEDTE[stadtName].bauplaetze.forEach(bp => bp.belegtDurch = null);
+          }
+      }
       location.reload();
     }
   }
@@ -587,20 +634,16 @@
 
     const weltkarteContainer = document.getElementById('weltkarteContainer');
     const stadtansichtContainer = document.getElementById('stadtansichtContainer');
-    const stadtkarteBild = document.getElementById('stadtkarteBild');
     const stadtansichtTitel = document.getElementById('stadtansichtTitel');
+    const stadtkarteSVGContainer = document.getElementById('stadtkarteSVGContainer');
 
     weltkarteContainer.style.display = 'none'; // Weltkarte ausblenden
     stadtansichtContainer.style.display = 'block'; // Stadtansicht einblenden
 
     stadtansichtTitel.textContent = `${stadtName} – Stadtansicht`;
-    // Setze das Bild der Stadtkarte
-    const stadtDaten = STAEDTE[stadtName];
-    if (stadtDaten && stadtDaten.stadtkarte) {
-        stadtkarteBild.src = stadtDaten.stadtkarte;
-    } else {
-        stadtkarteBild.src = 'https://via.placeholder.com/800x450/cccccc?text=Keine+Stadtkarte+verfügbar'; // Fallback
-    }
+
+    // Lade und zeige das Stadtkarte-SVG an
+    renderStadtkarteSVG(stadtName);
 
     // Aktualisiere den Spielerstatus, um die aktuelle Stadt anzuzeigen
     aktualisiereSpielerStatusAnzeige();
@@ -608,6 +651,127 @@
     // Zeige direkt die Übersicht für die ausgewählte Stadt
     zeigeMenue('uebersicht');
   }
+
+  /**
+   * Lädt die SVG-Datei der Stadtkarte und rendert sie im Container.
+   * Fügt auch die Bauplätze und bereits gebaute Gebäude hinzu.
+   * @param {string} stadtName - Name der aktuellen Stadt.
+   */
+  async function renderStadtkarteSVG(stadtName) {
+    const stadtkarteSVGContainer = document.getElementById('stadtkarteSVGContainer');
+    const stadtDaten = STAEDTE[stadtName];
+
+    if (!stadtDaten || !stadtDaten.stadtkarte) {
+        stadtkarteSVGContainer.innerHTML = '<p>Keine Stadtkarte verfügbar oder URL fehlt.</p>';
+        console.error('Keine Stadtkarte für', stadtName);
+        return;
+    }
+
+    try {
+        const response = await fetch(stadtDaten.stadtkarte);
+        if (!response.ok) {
+            throw new Error(`Fehler beim Laden der SVG: ${response.statusText}`);
+        }
+        const svgText = await response.text();
+
+        // Füge das SVG in den Container ein
+        stadtkarteSVGContainer.innerHTML = svgText;
+        const stadtSVG = stadtkarteSVGContainer.querySelector('svg');
+        if (!stadtSVG) {
+            console.error('Geladene Datei ist kein gültiges SVG.');
+            stadtkarteSVGContainer.innerHTML = '<p>Fehler: Ungültige SVG-Datei.</p>';
+            return;
+        }
+        stadtSVG.id = 'stadtkarteSVG'; // Setze eine ID für das SVG
+
+        // Füge Bauplätze hinzu
+        if (stadtDaten.bauplaetze) {
+            const gebauteGebaeudeInStadt = SPIELER_DATEN.gebaeude[stadtName] || {};
+            stadtDaten.bauplaetze.forEach(bauplatz => {
+                let bauplatzElement = stadtSVG.querySelector(`#bauplatz-${bauplatz.id}`);
+
+                if (!bauplatzElement) {
+                    // Wenn kein Element mit dieser ID existiert, erstelle ein Rechteck
+                    bauplatzElement = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    bauplatzElement.setAttribute('id', `bauplatz-${bauplatz.id}`);
+                    bauplatzElement.setAttribute('x', bauplatz.x);
+                    bauplatzElement.setAttribute('y', bauplatz.y);
+                    bauplatzElement.setAttribute('width', bauplatz.width);
+                    bauplatzElement.setAttribute('height', bauplatz.height);
+                    stadtSVG.appendChild(bauplatzElement);
+                }
+
+                bauplatzElement.setAttribute('class', 'bauplatz'); // Grundklasse
+                bauplatzElement.dataset.bauplatzId = bauplatz.id;
+
+                // Überprüfe, ob der Bauplatz belegt ist
+                if (gebauteGebaeudeInStadt[bauplatz.id]) {
+                    bauplatzElement.classList.add('belegt');
+                    // Gebäude-Bild auf dem Bauplatz anzeigen
+                    const gebaeudeName = gebauteGebaeudeInStadt[bauplatz.id];
+                    const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
+                    if (gebaeudeTyp && gebaeudeTyp.bild) {
+                        let gebaeudeImage = stadtSVG.querySelector(`#gebaeude-${bauplatz.id}`);
+                        if (!gebaeudeImage) {
+                            gebaeudeImage = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                            gebaeudeImage.setAttribute('id', `gebaeude-${bauplatz.id}`);
+                            stadtSVG.appendChild(gebaeudeImage);
+                        }
+                        gebaeudeImage.setAttribute('href', gebaeudeTyp.bild);
+                        gebaeudeImage.setAttribute('x', bauplatz.x);
+                        gebaeudeImage.setAttribute('y', bauplatz.y);
+                        gebaeudeImage.setAttribute('width', bauplatz.width);
+                        gebaeudeImage.setAttribute('height', bauplatz.height);
+                        gebaeudeImage.style.pointerEvents = 'none'; // Nicht klickbar machen
+                    }
+                } else {
+                    bauplatzElement.classList.remove('belegt');
+                    // Event-Listener nur für freie Bauplätze
+                    bauplatzElement.addEventListener('click', () => bauplatzKlicken(bauplatz.id));
+                    // Entferne evtl. alte Gebäudebilder
+                    const oldGebaeudeImage = stadtSVG.querySelector(`#gebaeude-${bauplatz.id}`);
+                    if(oldGebaeudeImage) oldGebaeudeImage.remove();
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Fehler beim Laden oder Rendern der Stadtkarte SVG:', error);
+        stadtkarteSVGContainer.innerHTML = '<p>Konnte Stadtkarte nicht laden.</p>';
+    }
+  }
+
+  /**
+   * Wird aufgerufen, wenn ein Spieler auf einen Bauplatz klickt.
+   * Zeigt ein Menü zum Bauen an.
+   * @param {string} bauplatzId - Die ID des angeklickten Bauplatzes.
+   */
+  function bauplatzKlicken(bauplatzId) {
+    const inhaltDiv = document.getElementById('inhalt');
+    const stadtName = SPIELER_DATEN.aktuelleStadt;
+    const stadtGebaeude = SPIELER_DATEN.gebaeude[stadtName] || {};
+
+    if (stadtGebaeude[bauplatzId]) {
+      inhaltDiv.innerHTML = `<p>Dieser Bauplatz (${bauplatzId}) ist bereits mit einem ${stadtGebaeude[bauplatzId]} belegt.</p>
+                             <button onclick="zeigeMenue('gebaeude')">Zurück zu Gebäudeübersicht</button>`;
+      return;
+    }
+
+    let htmlInhalt = `<h2>Gebäude auf Bauplatz ${bauplatzId} bauen</h2>
+                      <p>Wähle ein Gebäude zum Bau:</p>
+                      <ul>`;
+
+    for (const gebaeudeName in GEBAEUDE_TYPEN) {
+      const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
+      const kannBauen = SPIELER_DATEN.gold >= gebaeudeTyp.kosten;
+      htmlInhalt += `<li>${gebaeudeName} (${gebaeudeTyp.beschreibung}) – Kosten: ${gebaeudeTyp.kosten} Gold
+                     <button onclick="gebaeudeBauen('${gebaeudeName}', '${bauplatzId}')" ${kannBauen ? '' : 'disabled'}>Bauen</button></li>`;
+    }
+    htmlInhalt += `</ul>
+                   <button onclick="zeigeMenue('gebaeude')">Abbrechen</button>`;
+    inhaltDiv.innerHTML = htmlInhalt;
+  }
+
 
   /**
    * Wechselt von der Stadtansicht zurück zur Weltkarte.
@@ -619,9 +783,13 @@
     const weltkarteContainer = document.getElementById('weltkarteContainer');
     const stadtansichtContainer = document.getElementById('stadtansichtContainer');
     const inhaltDiv = document.getElementById('inhalt');
+    const stadtkarteSVGContainer = document.getElementById('stadtkarteSVGContainer');
 
     stadtansichtContainer.style.display = 'none'; // Stadtansicht ausblenden
     weltkarteContainer.style.display = 'block'; // Weltkarte einblenden
+
+    // Entferne das SVG aus dem Container, um Speicher freizugeben
+    stadtkarteSVGContainer.innerHTML = '';
 
     inhaltDiv.innerHTML = '<p>Wähle eine Stadt auf der Karte, um zu beginnen.</p>';
     aktualisiereSpielerStatusAnzeige(); // Aktualisiere den Status ("Aktuelle Stadt: Keine")
@@ -664,10 +832,17 @@
           <table>
             <tr><th>Ware</th><th>Preis</th><th>Stadt-Lager</th><th>Deine Menge</th><th colspan="2">Aktion</th></tr>`;
 
+        // Sicherstellen, dass alle Waren in der Stadt initialisiert sind
         ALLE_WAREN.forEach(wareName => {
-          if (!aktuelleStadtDaten.gueter[wareName]) {
-              aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
-          }
+            if (!aktuelleStadtDaten.gueter[wareName]) {
+                aktuelleStadtDaten.gueter[wareName] = { basisPreis: 30, lager: 0, produktionsFaktor: 1.2, basisLager: 0 };
+            }
+            if (typeof aktuelleStadtDaten.gueter[wareName].basisLager === 'undefined') {
+                aktuelleStadtDaten.gueter[wareName].basisLager = aktuelleStadtDaten.gueter[wareName].lager;
+            }
+        });
+
+        for (const wareName in aktuelleStadtDaten.gueter) { // Iteriere über Güter in der Stadt
           const wareInStadt = aktuelleStadtDaten.gueter[wareName];
           const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
           const spielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
@@ -691,7 +866,7 @@
                   <button id="btnVerkaufen_${wareName}" onclick="handelWare('${wareName}', 'verkaufen')" ${kannVerkaufen ? '' : 'disabled'}>Verkaufen</button>
                 </td>
               </tr>`;
-        });
+        }
         htmlInhalt += `</table>
         <h3>Dein Inventar:</h3>
         <table>
@@ -710,25 +885,20 @@
         break;
 
       case 'gebaeude':
+        // Hier wird nur noch der Hinweis angezeigt, auf die Karte zu klicken
         htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Gebäude</h2>
-          <h3>Besitz in ${SPIELER_DATEN.aktuelleStadt}:</h3>
-          <ul>`;
-          const stadtGebaeude = SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] || {};
-          if (Object.keys(stadtGebaeude).length === 0) {
-            htmlInhalt += `<li>Keine Gebäude im Besitz.</li>`;
-          } else {
-            for (const gebaeudeName in stadtGebaeude) {
-              htmlInhalt += `<li>${gebaeudeName} (Stufe ${stadtGebaeude[gebaeudeName]})</li>`;
+                      <p>Klicke auf einen freien Bauplatz auf der Stadtkarte, um ein Gebäude zu bauen.</p>
+                      <h3>Deine gebauten Gebäude in ${SPIELER_DATEN.aktuelleStadt}:</h3>`;
+        const stadtGebaeude = SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] || {};
+        if (Object.keys(stadtGebaeude).length === 0) {
+            htmlInhalt += `<p>Du hast noch keine Gebäude in dieser Stadt gebaut.</p>`;
+        } else {
+            htmlInhalt += `<ul>`;
+            for (const bauplatzId in stadtGebaeude) {
+                htmlInhalt += `<li>Bauplatz ${bauplatzId}: ${stadtGebaeude[bauplatzId]}</li>`;
             }
-          }
-          htmlInhalt += `</ul>
-          <h3>Verfügbare Gebäude zum Bau:</h3>
-          <ul>`;
-          for (const gebaeudeName in GEBAEUDE_TYPEN) {
-            const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
-            htmlInhalt += `<li>${gebaeudeName} (${gebaeudeTyp.beschreibung}) – Kosten: ${gebaeudeTyp.kosten} Gold <button onclick="gebaeudeBauen('${gebaeudeName}', ${gebaeudeTyp.kosten})">Bauen</button></li>`;
-          }
-          htmlInhalt += `</ul>`;
+            htmlInhalt += `</ul>`;
+        }
         break;
 
       case 'schiffe':
@@ -872,29 +1042,60 @@
   }
 
   /**
-   * Baut ein Gebäude in der aktuellen Stadt.
+   * Baut ein Gebäude in der aktuellen Stadt auf einem bestimmten Bauplatz.
    * @param {string} gebaeudeName - Der Name des zu bauenden Gebäudes.
-   * @param {number} kosten - Die Kosten des Gebäudes.
+   * @param {string} bauplatzId - Die ID des Bauplatzes, auf dem gebaut werden soll.
    */
-  function gebaeudeBauen(gebaeudeName, kosten) {
-    if (SPIELER_DATEN.gold >= kosten) {
-      if (!SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt]) {
-        SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] = {};
-      }
-      if (!SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt][gebaeudeName]) {
-        SPIELER_DATEN.gold -= kosten;
-        SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt][gebaeudeName] = 1;
-        aktualisiereXP(20);
-        alert(`${gebaeudeName} in ${SPIELER_DATEN.aktuelleStadt} gebaut!`);
-        speichereSpielstand();
-      } else {
-        alert(`Du hast bereits ein ${gebaeudeName} in ${SPIELER_DATEN.aktuelleStadt}.`);
-      }
-    } else {
-      alert('Nicht genug Gold, um dieses Gebäude zu bauen!');
+  function gebaeudeBauen(gebaeudeName, bauplatzId) {
+    const aktuelleStadt = SPIELER_DATEN.aktuelleStadt;
+    const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
+
+    if (!gebaeudeTyp) {
+        alert('Unbekannter Gebäudetyp!');
+        return;
     }
-    zeigeMenue('gebaeude');
+
+    if (SPIELER_DATEN.gold < gebaeudeTyp.kosten) {
+        alert('Nicht genug Gold, um dieses Gebäude zu bauen!');
+        return;
+    }
+
+    if (!STAEDTE[aktuelleStadt] || !STAEDTE[aktuelleStadt].bauplaetze) {
+        console.error('Stadt oder Bauplätze nicht gefunden:', aktuelleStadt);
+        alert('Fehler: Stadt- oder Bauplatzdaten fehlen.');
+        return;
+    }
+
+    const bauplatz = STAEDTE[aktuelleStadt].bauplaetze.find(bp => bp.id === bauplatzId);
+
+    if (!bauplatz) {
+        console.error('Bauplatz nicht gefunden:', bauplatzId);
+        alert('Fehler: Bauplatz nicht gefunden.');
+        return;
+    }
+
+    if (bauplatz.belegtDurch) {
+        alert(`Dieser Bauplatz ist bereits mit einem ${bauplatz.belegtDurch} belegt.`);
+        return;
+    }
+
+    // Gebäude bauen
+    SPIELER_DATEN.gold -= gebaeudeTyp.kosten;
+    if (!SPIELER_DATEN.gebaeude[aktuelleStadt]) {
+        SPIELER_DATEN.gebaeude[aktuelleStadt] = {};
+    }
+    SPIELER_DATEN.gebaeude[aktuelleStadt][bauplatzId] = gebaeudeName;
+    bauplatz.belegtDurch = gebaeudeName; // Bauplatz in den STAEDTE-Daten als belegt markieren
+
+    aktualisiereXP(20);
+    alert(`${gebaeudeName} auf Bauplatz ${bauplatzId} in ${aktuelleStadt} gebaut!`);
+    speichereSpielstand();
+
+    // Stadtkarte neu rendern, um das Gebäude anzuzeigen
+    renderStadtkarteSVG(aktuelleStadt);
+    zeigeMenue('gebaeude'); // Zurück zur Gebäudeübersicht
   }
+
 
   /**
    * Kauft ein Schiff für den Spieler.
@@ -1000,11 +1201,26 @@
     for (const stadtName in STAEDTE) {
       const stadtDaten = STAEDTE[stadtName];
 
+      // Sicherstellen, dass basisLager für bestehende Spielstände gesetzt ist
       for (const wareName in stadtDaten.gueter) {
           if (typeof stadtDaten.gueter[wareName].basisLager === 'undefined') {
             stadtDaten.gueter[wareName].basisLager = stadtDaten.gueter[wareName].lager;
           }
       }
+      // Sicherstellen, dass bauplaetze initialisiert sind, falls noch nicht geschehen
+      if (!stadtDaten.bauplaetze) {
+          stadtDaten.bauplaetze = []; // Oder ein Standardset, wenn du das willst
+      } else {
+          // Für gespeicherte Spiele sicherstellen, dass belegtDurch konsistent ist
+          stadtDaten.bauplaetze.forEach(bp => {
+              if (SPIELER_DATEN.gebaeude[stadtName] && SPIELER_DATEN.gebaeude[stadtName][bp.id]) {
+                  bp.belegtDurch = SPIELER_DATEN.gebaeude[stadtName][bp.id];
+              } else {
+                  bp.belegtDurch = null;
+              }
+          });
+      }
+
 
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       circle.setAttribute('class', 'stadt-button');
