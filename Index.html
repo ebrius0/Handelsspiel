@@ -104,14 +104,14 @@
         border-radius: 4px;
     }
 
-    /* NEUE STYLES FÜR SCHIFFSMENÜ */
-    .schiff-container {
+    /* NEUE STYLES FÜR SCHIFFS- UND GEBÄUDEMENÜ */
+    .schiff-container, .gebaeude-container { /* Wiederverwendung der Klasse */
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
         margin-top: 20px;
     }
-    .schiff-karte {
+    .schiff-karte, .gebaeude-karte { /* Wiederverwendung der Klasse */
         background: #f9f9f9;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
@@ -121,15 +121,15 @@
         flex-direction: column;
         justify-content: space-between;
     }
-    .schiff-karte h3 {
+    .schiff-karte h3, .gebaeude-karte h3 {
         margin-top: 0;
         color: #333;
     }
-    .schiff-info p {
+    .schiff-info p, .gebaeude-info p {
         margin: 5px 0;
         font-size: 0.9em;
     }
-    .schiff-aktionen {
+    .schiff-aktionen, .gebaeude-aktionen {
         margin-top: 15px;
         text-align: center;
     }
@@ -205,7 +205,7 @@
     aktuelleStadt: null,
     schiffeBesitz: [],
     inventar: {},
-    gebaeude: {} // Bleibt eine leere Struktur in dieser Version
+    gebaeude: {} // WIRD DYNAMISCH BEIM START FÜR JEDE STADT MIT WERFT STUFE 1 BEFÜLLT
   };
 
   let SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
@@ -225,7 +225,7 @@
     '+5': { name: 'Königlicher Händler', beschreibung: 'Der Gipfel des Ansehens. Seine Handelsimperium ist legendär, und er genießt das Vertrauen und die Gunst der höchsten Adligen.' }
   };
 
-  // --- STÄDTEDATEN (ohne spezifische "stadtkarte" URL, da nicht mehr verwendet) ---
+  // --- STÄDTEDATEN ---
   const STAEDTE = {
     'Aethelgard': { x: 150, y: 120, einwohner: 1200, versorgung: 'Gut',
       gueter: {
@@ -327,11 +327,88 @@
     { name: 'Holk', levelNoetig: 30, kapazitaet: 600, preis: 10000 }
   ];
 
-  // --- GEBÄUDE_TYPEN (bleiben als Definitionen bestehen, aber ohne Bauplatzlogik) ---
+  // --- GEBÄUDE_TYPEN (jetzt mit Stufen und Kosten) ---
   const GEBAEUDE_TYPEN = {
-    'Lagerhaus': { kosten: 100, beschreibung: 'Erhöht Lagerplatz.' },
-    'Kontor': { kosten: 200, beschreibung: 'Ermöglicht Landhandel.' }
+    'Werft': {
+      beschreibung: 'Ermöglicht den Bau und die Reparatur von Schiffen. Höhere Stufen schalten größere Schiffe frei und reduzieren Reparaturkosten.',
+      kosten: [200, 500, 1500], // Kosten für Stufe 1, 2, 3 (Upgrade-Kosten)
+      levelNoetig: [1, 5, 15], // Benötigtes Spielerlevel für Stufe 1, 2, 3
+      maxStufe: 3,
+      effekte: [
+          { typ: 'schiff_level', wert: 1, beschreibung: 'Ermöglicht Bau von Schnigge.' },
+          { typ: 'schiff_level', wert: 2, beschreibung: 'Ermöglicht Bau von Kraier. Reparaturkosten -10%.' },
+          { typ: 'schiff_level', wert: 3, beschreibung: 'Ermöglicht Bau von Kogge. Reparaturkosten -20%.' }
+      ]
+    },
+    'Lagerhaus': {
+      beschreibung: 'Erhöht die Lagerkapazität deiner Waren in dieser Stadt.',
+      kosten: [100, 300, 800],
+      levelNoetig: [2, 7, 18],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'lager_bonus', wert: 50, beschreibung: '+50 Lagerplatz.' },
+          { typ: 'lager_bonus', wert: 150, beschreibung: '+150 Lagerplatz.' },
+          { typ: 'lager_bonus', wert: 300, beschreibung: '+300 Lagerplatz.' }
+      ]
+    },
+    'Kontor': {
+      beschreibung: 'Verbessert deine Handelspreise in dieser Stadt.',
+      kosten: [200, 600, 1000],
+      levelNoetig: [3, 9, 20],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'preis_bonus', wert: 0.02, beschreibung: 'Handelspreise +2%.' }, // 2% besser (kaufen günstiger, verkaufen teurer)
+          { typ: 'preis_bonus', wert: 0.05, beschreibung: 'Handelspreise +5%.' },
+          { typ: 'preis_bonus', wert: 0.10, beschreibung: 'Handelspreise +10%.' }
+      ]
+    },
+    'Mine': {
+      beschreibung: 'Erhöht die Produktion von Erzen und Kohle in dieser Stadt.',
+      kosten: [300, 800, 2000],
+      levelNoetig: [4, 12, 25],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'produktion_bonus', gueter: ['Silbererz', 'Eisen', 'Kohle'], wert: 0.1, beschreibung: 'Erz/Kohle Produktion +10%.' },
+          { typ: 'produktion_bonus', gueter: ['Silbererz', 'Eisen', 'Kohle'], wert: 0.2, beschreibung: 'Erz/Kohle Produktion +20%.' },
+          { typ: 'produktion_bonus', gueter: ['Silbererz', 'Eisen', 'Kohle'], wert: 0.3, beschreibung: 'Erz/Kohle Produktion +30%.' }
+      ]
+    },
+    'Forsthaus': {
+      beschreibung: 'Steigert die Holzproduktion.',
+      kosten: [150, 400, 1000],
+      levelNoetig: [2, 6, 16],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'produktion_bonus', gueter: ['Holz'], wert: 0.15, beschreibung: 'Holz Produktion +15%.' },
+          { typ: 'produktion_bonus', gueter: ['Holz'], wert: 0.30, beschreibung: 'Holz Produktion +30%.' },
+          { typ: 'produktion_bonus', gueter: ['Holz'], wert: 0.45, beschreibung: 'Holz Produktion +45%.' }
+      ]
+    },
+    'Fischereihafen': {
+      beschreibung: 'Verbessert den Fischfang in Küstenstädten.',
+      kosten: [100, 250, 700],
+      levelNoetig: [1, 4, 14],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'produktion_bonus', gueter: ['Fisch'], wert: 0.2, beschreibung: 'Fisch Produktion +20%.' },
+          { typ: 'produktion_bonus', gueter: ['Fisch'], wert: 0.4, beschreibung: 'Fisch Produktion +40%.' },
+          { typ: 'produktion_bonus', gueter: ['Fisch'], wert: 0.6, beschreibung: 'Fisch Produktion +60%.' }
+      ]
+    },
+    'Gildenhalle': {
+      beschreibung: 'Verbessert deinen Rufzuwachs in dieser Stadt.',
+      kosten: [500, 1200, 3000],
+      levelNoetig: [8, 16, 28],
+      maxStufe: 3,
+      effekte: [
+          { typ: 'ruf_bonus', wert: 0.1, beschreibung: 'Rufzuwachs +10%.' },
+          { typ: 'ruf_bonus', wert: 0.2, beschreibung: 'Rufzuwachs +20%.' },
+          { typ: 'ruf_bonus', wert: 0.3, beschreibung: 'Rufzuwachs +30%.' }
+      ]
+    }
+    // Weitere Gebäude hier hinzufügen, falls gewünscht
   };
+
 
   // --- SPIELLOGIK FUNKTIONEN ---
 
@@ -360,8 +437,19 @@
       if (savedPlayerData) {
         const parsedPlayerData = JSON.parse(savedPlayerData);
         SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN, ...parsedPlayerData };
-        // Sicherstellen, dass gebaeude-Struktur existiert, aber leer ist
+        // Sicherstellen, dass gebaeude-Struktur existiert und initialisiert ist
         if (!SPIELER_DATEN.gebaeude) SPIELER_DATEN.gebaeude = {};
+
+        // Falls Werft nicht vorhanden ist (z.B. alter Spielstand), füge sie hinzu
+        for (const stadtName in STAEDTE) {
+            if (!SPIELER_DATEN.gebaeude[stadtName]) {
+                SPIELER_DATEN.gebaeude[stadtName] = {};
+            }
+            if (!SPIELER_DATEN.gebaeude[stadtName]['Werft']) {
+                SPIELER_DATEN.gebaeude[stadtName]['Werft'] = { stufe: 1 };
+            }
+        }
+
         console.log('Spielerdaten geladen:', SPIELER_DATEN);
       } else {
         console.log('Kein Spieler-Spielstand gefunden. Starte neues Spiel.');
@@ -371,6 +459,10 @@
             ladungsmenge: 0,
             ladungsDetails: {}
         });
+        // Initialisiere die Werft für alle Städte beim neuen Spiel
+        for (const stadtName in STAEDTE) {
+            SPIELER_DATEN.gebaeude[stadtName] = { 'Werft': { stufe: 1 } };
+        }
       }
 
       if (savedCitiesData) {
@@ -394,7 +486,6 @@
 
                 STAEDTE[stadtName].einwohner = parsedCitiesData[stadtName].einwohner;
                 STAEDTE[stadtName].versorgung = parsedCitiesData[stadtName].versorgung;
-                // 'stadtkarte' Attribut nicht von Speicherstand überschreiben, da es in dieser Version nicht mehr dynamisch ist
             }
         }
         console.log('Stadtstatus geladen.');
@@ -414,6 +505,10 @@
       console.error('Fehler beim Laden des Spielstands:', e);
       alert('Fehler beim Laden des Spielstands. Es wird ein neues Spiel gestartet.');
       SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
+      // Initialisiere die Werft für alle Städte beim neuen Spiel
+      for (const stadtName in STAEDTE) {
+          SPIELER_DATEN.gebaeude[stadtName] = { 'Werft': { stufe: 1 } };
+      }
       // Auch hier sicherstellen, dass basisLager für neue Spiele korrekt gesetzt ist
       for (const stadtName in STAEDTE) {
           for (const wareName in STAEDTE[stadtName].gueter) {
@@ -433,6 +528,10 @@
       localStorage.removeItem('handelsspiel_speicherstand');
       localStorage.removeItem('handelsspiel_staedte_status');
       SPIELER_DATEN = { ...INITIALE_SPIELER_DATEN };
+      // Initialisiere die Werft für alle Städte beim neuen Spiel
+      for (const stadtName in STAEDTE) {
+          SPIELER_DATEN.gebaeude[stadtName] = { 'Werft': { stufe: 1 } };
+      }
       // Auch hier die Basiswerte der Städte für ein neues Spiel setzen
       for (const stadtName in STAEDTE) {
           for (const wareName in STAEDTE[stadtName].gueter) {
@@ -481,8 +580,22 @@
     if (SPIELER_DATEN.ruf > 0) {
         preis *= (1 - rufEinflussFaktor);
     } else if (SPIELER_DATEN.ruf < 0) {
-        preis *= (1 - rufEinflussFaktor);
+        preis *= (1 - rufEinflussFfaktor);
     }
+
+    // Einfluss des Kontors
+    const stadtGebaeude = SPIELER_DATEN.gebaeude[stadtName] || {};
+    if (stadtGebaeude['Kontor']) {
+        const kontorStufe = stadtGebaeude['Kontor'].stufe;
+        const kontorEffekt = GEBAEUDE_TYPEN['Kontor'].effekte[kontorStufe - 1].wert;
+        // Kaufen günstiger, Verkaufen teurer
+        if (SPIELER_DATEN.aktuelleAktion === 'kaufen') { // Annahme: Du verfolgst die aktuelle Aktion
+            preis *= (1 - kontorEffekt);
+        } else if (SPIELER_DATEN.aktuelleAktion === 'verkaufen') {
+            preis *= (1 + kontorEffekt);
+        }
+    }
+
 
     return Math.max(1, Math.round(preis));
   }
@@ -538,15 +651,17 @@
 
     aktualisiereSpielerStatusAnzeige();
 
-    // "Schiffe" Menü kann immer aufgerufen werden, auch ohne ausgewählte Stadt
-    // Aber Handel und Gebäude benötigen eine ausgewählte Stadt
-    if (!SPIELER_DATEN.aktuelleStadt && menuepunkt !== 'schiffe') {
+    // "Schiffe" und "Gebäude" Menü kann immer aufgerufen werden, auch ohne ausgewählte Stadt,
+    // aber Gebäude ist nur relevant, wenn eine Stadt ausgewählt ist, um die Stadtgebäude anzuzeigen
+    if (!SPIELER_DATEN.aktuelleStadt && (menuepunkt === 'handel' || menuepunkt === 'gebaeude')) {
       inhaltDiv.innerHTML = '<p>Bitte zuerst eine Stadt auf der Karte auswählen!</p>';
       return;
     }
 
     let htmlInhalt = '';
     const aktuelleStadtDaten = SPIELER_DATEN.aktuelleStadt ? STAEDTE[SPIELER_DATEN.aktuelleStadt] : null;
+    const stadtGebaeude = SPIELER_DATEN.aktuelleStadt ? (SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] || {}) : {};
+
 
     switch (menuepunkt) {
       case 'uebersicht':
@@ -576,7 +691,13 @@
 
         for (const wareName in aktuelleStadtDaten.gueter) { // Iteriere über Güter in der Stadt
           const wareInStadt = aktuelleStadtDaten.gueter[wareName];
-          const preis = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+          // Temporär die Aktion setzen, um den Preis zu beeinflussen
+          SPIELER_DATEN.aktuelleAktion = 'kaufen';
+          const preisKauf = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+          SPIELER_DATEN.aktuelleAktion = 'verkaufen';
+          const preisVerkauf = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+          delete SPIELER_DATEN.aktuelleAktion; // Aktion zurücksetzen
+
           const spielerMenge = SPIELER_DATEN.inventar[wareName] || 0;
           const stadtLager = wareInStadt.lager;
 
@@ -586,7 +707,7 @@
           htmlInhalt += `
               <tr>
                 <td>${wareName}</td>
-                <td id="preis_${wareName}">${preis} Gold</td>
+                <td id="preis_${wareName}">K: ${preisKauf} / V: ${preisVerkauf} Gold</td>
                 <td id="stadtLager_${wareName}">${stadtLager}</td>
                 <td id="spielerMenge_${wareName}">${spielerMenge}</td>
                 <td>
@@ -618,27 +739,52 @@
 
       case 'gebaeude':
         htmlInhalt = `<h2>${SPIELER_DATEN.aktuelleStadt} – Gebäude</h2>
-                      <p>Hier könntest du später Gebäude bauen oder verwalten.</p>
-                      <h3>Verfügbare Gebäudetypen:</h3>
-                      <ul>`;
+                      <h3>Deine Gebäude in ${SPIELER_DATEN.aktuelleStadt}:</h3>
+                      <div class="gebaeude-container">`;
+
+        // Zeige alle verfügbaren Gebäudetypen an
         for (const gebaeudeName in GEBAEUDE_TYPEN) {
             const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
-            htmlInhalt += `<li>${gebaeudeName}: ${gebaeudeTyp.beschreibung} (Kosten: ${gebaeudeTyp.kosten} Gold)</li>`;
-        }
-        htmlInhalt += `</ul>`;
-        htmlInhalt += `<h3>Deine gebauten Gebäude in ${SPIELER_DATEN.aktuelleStadt}:</h3>`;
-        const stadtGebaeude = SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt] || {};
-        if (Object.keys(stadtGebaeude).length === 0) {
-            htmlInhalt += `<p>Du hast noch keine Gebäude in dieser Stadt gebaut.</p>`;
-        } else {
-            // Dies würde hier nur anzeigen, wenn du manuell Gebäude hinzufügen würdest,
-            // da es keine Bauplatzlogik mehr gibt
-            htmlInhalt += `<ul>`;
-            for (const gebaeudeKey in stadtGebaeude) {
-                htmlInhalt += `<li>${st.gebueadeKey}: ${stadtGebaeude[gebaueKey]}</li>`;
+            const spielerGebaeude = stadtGebaeude[gebaeudeName];
+            const aktuelleStufe = spielerGebaeude ? spielerGebaeude.stufe : 0;
+            const naechsteStufe = aktuelleStufe + 1;
+
+            let kostenNaechsteStufe = null;
+            let levelNoetigNaechsteStufe = null;
+            let istMaxStufe = false;
+            let beschreibungNaechsteStufe = '';
+            let kannKaufen = false;
+
+            if (naechsteStufe <= gebaeudeTyp.maxStufe) {
+                kostenNaechsteStufe = gebaeudeTyp.kosten[naechsteStufe - 1];
+                levelNoetigNaechsteStufe = gebaeudeTyp.levelNoetig[naechsteStufe - 1];
+                beschreibungNaechsteStufe = `Stufe ${naechsteStufe}: ${gebaeudeTyp.effekte[naechsteStufe - 1].beschreibung}`;
+                kannKaufen = SPIELER_DATEN.gold >= kostenNaechsteStufe && SPIELER_DATEN.level >= levelNoetigNaechsteStufe;
+            } else {
+                istMaxStufe = true;
+                beschreibungNaechsteStufe = 'Maximale Stufe erreicht!';
             }
-            htmlInhalt += `</ul>`;
+
+            htmlInhalt += `
+                <div class="gebaeude-karte">
+                  <h3>${gebaeudeName} (Stufe ${aktuelleStufe})</h3>
+                  <div class="gebaeude-info">
+                    <p>${gebaeudeTyp.beschreibung}</p>
+                    <p><b>Nächste Stufe:</b></p>
+                    <p>${beschreibungNaechsteStufe}</p>
+                    ${!istMaxStufe ? `
+                    <p>Kosten: ${kostenNaechsteStufe} Gold</p>
+                    <p>Benötigtes Level: ${levelNoetigNaechsteStufe}</p>
+                    ` : ''}
+                  </div>
+                  <div class="gebaeude-aktionen">
+                    <button class="kaufen-button" onclick="gebaeudeKaufen('${gebaeudeName}')" ${istMaxStufe || !kannKaufen ? 'disabled' : ''}>
+                      ${istMaxStufe ? 'Max. Stufe' : (kannKaufen ? 'Kaufen / Upgrade' : 'Nicht verfügbar')}
+                    </button>
+                  </div>
+                </div>`;
         }
+        htmlInhalt += `</div>`;
         break;
 
       case 'schiffe':
@@ -704,7 +850,11 @@
       return;
     }
 
+    // Temporär die Aktion setzen, damit berechneAktuellenPreis korrekt ist
+    SPIELER_DATEN.aktuelleAktion = aktion;
     const preisProEinheit = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+    delete SPIELER_DATEN.aktuelleAktion; // Aktion zurücksetzen
+
     const gesamtPreis = preisProEinheit * menge;
 
     let rufAenderung = 0;
@@ -775,7 +925,13 @@
         verkaufenInput.value = 1;
     }
 
-    document.getElementById(`preis_${wareName}`).textContent = `${berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName)} Gold`;
+    // Preis aktualisieren
+    SPIELER_DATEN.aktuelleAktion = 'kaufen';
+    const neuerPreisKauf = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+    SPIELER_DATEN.aktuelleAktion = 'verkaufen';
+    const neuerPreisVerkauf = berechneAktuellenPreis(SPIELER_DATEN.aktuelleStadt, wareName);
+    delete SPIELER_DATEN.aktuelleAktion;
+    document.getElementById(`preis_${wareName}`).textContent = `K: ${neuerPreisKauf} / V: ${neuerPreisVerkauf} Gold`;
 
     aktualisiereSpielerStatusAnzeige();
     speichereSpielstand();
@@ -792,6 +948,14 @@
       alert('Unbekannter Schiffstyp!');
       return;
     }
+
+    // Prüfung, ob Werft in aktueller Stadt vorhanden und auf benötigter Stufe
+    const werftInStadt = SPIELER_DATEN.gebaeude[SPIELER_DATEN.aktuelleStadt]['Werft'];
+    if (!werftInStadt || werftInStadt.stufe < schiffTyp.levelNoetigWerft) { // Annahme: fügen wir noch zu SCHIFFS_TYPEN hinzu
+        alert(`Du benötigst eine Werft der Stufe ${schiffTyp.levelNoetigWerft || 1} in ${SPIELER_DATEN.aktuelleStadt}, um dieses Schiff zu bauen.`);
+        return;
+    }
+
 
     if (SPIELER_DATEN.gold >= preis && SPIELER_DATEN.level >= schiffTyp.levelNoetig) {
       SPIELER_DATEN.gold -= preis;
@@ -811,6 +975,57 @@
     }
     zeigeMenue('schiffe');
   }
+
+  /**
+   * Kauft ein Gebäude oder führt ein Upgrade durch.
+   * @param {string} gebaeudeName - Der Name des Gebäudetyps.
+   */
+  function gebaeudeKaufen(gebaeudeName) {
+    const aktuelleStadt = SPIELER_DATEN.aktuelleStadt;
+    if (!aktuelleStadt) {
+        alert('Bitte wähle zuerst eine Stadt aus.');
+        return;
+    }
+
+    if (!SPIELER_DATEN.gebaeude[aktuelleStadt]) {
+        SPIELER_DATEN.gebaeude[aktuelleStadt] = {};
+    }
+
+    const gebaeudeTyp = GEBAEUDE_TYPEN[gebaeudeName];
+    if (!gebaeudeTyp) {
+        alert('Unbekannter Gebäudetyp!');
+        return;
+    }
+
+    const aktuelleStufe = SPIELER_DATEN.gebaeude[aktuelleStadt][gebaeudeName] ? SPIELER_DATEN.gebaeude[aktuelleStadt][gebaeudeName].stufe : 0;
+    const naechsteStufe = aktuelleStufe + 1;
+
+    if (naechsteStufe > gebaeudeTyp.maxStufe) {
+        alert(`Das Gebäude "${gebaeudeName}" hat bereits die maximale Stufe erreicht.`);
+        return;
+    }
+
+    const kosten = gebaeudeTyp.kosten[naechsteStufe - 1];
+    const levelNoetig = gebaeudeTyp.levelNoetig[naechsteStufe - 1];
+
+    if (SPIELER_DATEN.gold < kosten) {
+        alert('Nicht genug Gold, um dieses Gebäude zu bauen oder upzugraden!');
+        return;
+    }
+    if (SPIELER_DATEN.level < levelNoetig) {
+        alert(`Dein Level ist zu niedrig. Du benötigst Level ${levelNoetig}, um dieses Gebäude auf Stufe ${naechsteStufe} zu bringen.`);
+        return;
+    }
+
+    SPIELER_DATEN.gold -= kosten;
+    SPIELER_DATEN.gebaeude[aktuelleStadt][gebaeudeName] = { stufe: naechsteStufe };
+    aktualisiereXP(20 * naechsteStufe); // Mehr XP für Gebäude
+
+    alert(`Das Gebäude "${gebaeudeName}" wurde auf Stufe ${naechsteStufe} gebracht!`);
+    speichereSpielstand();
+    zeigeMenue('gebaeude'); // Menü neu laden, um Änderungen zu zeigen
+  }
+
 
   /**
    * Fügt dem Spieler XP hinzu und prüft auf Levelaufstieg.
