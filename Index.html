@@ -199,6 +199,19 @@
         padding: 10px 20px;
         font-size: 1em;
     }
+
+    /* NEU für Karten-Reiseauswahl */
+    .stadt-button.reise-ziel {
+        fill: #ffcc00; /* Gelb für auswählbare Reiseziele */
+        stroke: #ffd700; /* Goldener Rand */
+        stroke-width: 3;
+    }
+    .stadt-button.active-reise-ziel {
+        fill: #00ff00; /* Grün, wenn aktiv ausgewählt */
+        stroke: #008000;
+        stroke-width: 4;
+        r: 15; /* Etwas größer, um die Auswahl zu betonen */
+    }
   </style>
 </head>
 <body>
@@ -221,13 +234,13 @@
   <p>Level: <span id="levelAnzeige"></span> (<span id="xpAnzeige"></span> XP)</p>
   <p>Ruf: <span id="rufAnzeige"></span> (<span id="rufRangAnzeige"></span>)</p>
   <p>Aktuelle Stadt: <span id="aktuelleStadtAnzeige">Keine</span></p>
-  <p>Ladekapazität: <span id="ladekapazitaetAnzeige"></span></p>
+  <p>Ladekapazitaet: <span id="ladekapazitaetAnzeige"></span></p>
   <p>Aktueller Tag: <span id="tagAnzeige"></span></p>
 </div>
 
 <div id="weltkarteContainer">
     <h2>Weltkarte</h2>
-    <p>Klicke auf eine Stadt auf der Karte, um sie als aktuelles Ziel zu setzen und von dort aus zu handeln oder zu reisen.</p>
+    <p id="kartenHinweis">Klicke auf eine Stadt auf der Karte, um sie als aktuelles Ziel zu setzen und von dort aus zu handeln oder zu reisen.</p>
     <svg id="karte" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
       <image href="https://raw.githubusercontent.com/ebrius0/Handelsspiel/main/file_0000000020d861fb8c92bec003f416bd%20(1).png" x="0" y="0" height="600" width="1000" preserveAspectRatio="xMidYMid slice"/>
     </svg>
@@ -283,84 +296,97 @@
         'Getreide': { basisPreis: 10, lager: 80, produktionsFaktor: 0.7 },
         'Fisch': { basisPreis: 12, lager: 60, produktionsFaktor: 0.8 },
         'Wolle': { basisPreis: 15, lager: 40, produktionsFaktor: 0.9 }
-      }
+      },
+      // NEU: Definierte Seeverbindungen
+      verbindungen: ['Port Valerius', 'Gezeitenruh']
     },
     'Port Valerius': { x: 280, y: 80, einwohner: 1500, versorgung: 'Sehr Gut',
       gueter: {
         'Holz': { basisPreis: 15, lager: 50, produktionsFaktor: 0.8 },
         'Tuch': { basisPreis: 25, lager: 30, produktionsFaktor: 1.0 },
         'Wein': { basisPreis: 20, lager: 20, produktionsFaktor: 1.1 }
-      }
+      },
+      verbindungen: ['Aethelgard', 'Silberhafen']
     },
     'Silberhafen': { x: 420, y: 95, einwohner: 900, versorgung: 'Mittel',
       gueter: {
         'Silbererz': { basisPreis: 40, lager: 30, produktionsFaktor: 0.7 },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 0.8 },
         'Kohle': { basisPreis: 20, lager: 40, produktionsFaktor: 0.75 }
-      }
+      },
+      verbindungen: ['Port Valerius', 'Ostwall', 'Drachenbucht']
     },
     'Ostwall': { x: 550, y: 130, einwohner: 1100, versorgung: 'Gut',
       gueter: {
         'Eisen': { basisPreis: 30, lager: 35, produktionsFaktor: 0.8 },
-        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.9, istWaffe: true }, // NEU: Waffen
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.9, istWaffe: true },
         'Getreide': { basisPreis: 10, lager: 40, produktionsFaktor: 1.0 }
-      }
+      },
+      verbindungen: ['Silberhafen', 'Drachenbucht', 'Sonnenküste']
     },
     'Drachenbucht': { x: 700, y: 180, einwohner: 1300, versorgung: 'Hervorragend',
       gueter: {
         'Wein': { basisPreis: 20, lager: 40, produktionsFaktor: 0.7 },
         'Tuch': { basisPreis: 25, lager: 25, produktionsFaktor: 0.9 },
         'Seide': { basisPreis: 80, lager: 10, produktionsFaktor: 1.05 }
-      }
+      },
+      verbindungen: ['Silberhafen', 'Ostwall', 'Sonnenküste', 'Wolkenfels', 'Tidenfall']
     },
     'Sonnenküste': { x: 850, y: 250, einwohner: 1050, versorgung: 'Gut',
       gueter: {
         'Exotische Früchte': { basisPreis: 45, lager: 30, produktionsFaktor: 0.75 },
         'Juwelen': { basisPreis: 100, lager: 8, produktionsFaktor: 0.8 },
         'Gewürze': { basisPreis: 60, lager: 15, produktionsFaktor: 1.0 }
-      }
+      },
+      verbindungen: ['Ostwall', 'Drachenbucht', 'Tidenfall']
     },
     'Tidenfall': { x: 880, y: 380, einwohner: 950, versorgung: 'Mittel',
       gueter: {
         'Fisch': { basisPreis: 12, lager: 70, produktionsFaktor: 0.7 },
         'Kräuter': { basisPreis: 22, lager: 50, produktionsFaktor: 0.9 },
         'Salz': { basisPreis: 18, lager: 30, produktionsFaktor: 0.8 }
-      }
+      },
+      verbindungen: ['Drachenbucht', 'Sonnenküste', 'Sturmkap', 'Auenbrück'] // Auenbrück über Fluss/Kanal angebunden
     },
     'Sturmkap': { x: 800, y: 500, einwohner: 1400, versorgung: 'Sehr Gut',
       gueter: {
         'Rüstungen': { basisPreis: 90, lager: 12, produktionsFaktor: 0.8 },
-        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.9, istWaffe: true }, // NEU: Waffen
+        'Waffen': { basisPreis: 70, lager: 10, produktionsFaktor: 0.9, istWaffe: true },
         'Eisen': { basisPreis: 30, lager: 20, produktionsFaktor: 1.0 }
-      }
+      },
+      verbindungen: ['Tidenfall', 'Flussfurt'] // Flussfurt über Fluss/Kanal angebunden
     },
     'Flussfurt': { x: 350, y: 350, einwohner: 700, versorgung: 'Mittel',
       gueter: {
         'Getreide': { basisPreis: 10, lager: 90, produktionsFaktor: 0.6 },
         'Holz': { basisPreis: 15, lager: 70, produktionsFaktor: 0.7 },
         'Leder': { basisPreis: 20, lager: 30, produktionsFaktor: 0.8 }
-      }
+      },
+      verbindungen: ['Sturmkap', 'Auenbrück', 'Gezeitenruh'] // Flussverbindungen
     },
     'Auenbrück': { x: 550, y: 420, einwohner: 850, versorgung: 'Schlecht',
       gueter: {
         'Holz': { basisPreis: 15, lager: 60, produktionsFaktor: 0.65 },
         'Kohle': { basisPreis: 20, lager: 50, produktionsFaktor: 0.7 },
         'Erz': { basisPreis: 30, lager: 25, produktionsFaktor: 0.8 }
-      }
+      },
+      verbindungen: ['Tidenfall', 'Flussfurt'] // Flussverbindungen
     },
     'Gezeitenruh': { x: 100, y: 500, einwohner: 600, versorgung: 'Sehr Schlecht',
       gueter: {
         'Rum': { basisPreis: 80, lager: 15, produktionsFaktor: 0.7 },
         'Tropische Hölzer': { basisPreis: 35, lager: 25, produktionsFaktor: 0.7 },
         'Gewürze': { basisPreis: 60, lager: 10, produktionsFaktor: 0.85 }
-      }
+      },
+      verbindungen: ['Aethelgard', 'Flussfurt']
     },
     'Wolkenfels': { x: 920, y: 70, einwohner: 750, versorgung: 'Gut',
       gueter: {
         'Perlen': { basisPreis: 60, lager: 15, produktionsFaktor: 0.7 },
         'Edelsteine': { basisPreis: 110, lager: 5, produktionsFaktor: 0.75 },
         'Seide': { basisPreis: 80, lager: 7, produktionsFaktor: 0.8 }
-      }
+      },
+      verbindungen: ['Drachenbucht']
     }
   };
 
@@ -563,6 +589,11 @@
 
                 STAEDTE[stadtName].einwohner = parsedCitiesData[stadtName].einwohner;
                 STAEDTE[stadtName].versorgung = parsedCitiesData[stadtName].versorgung;
+                
+                // Füge Verbindungen hinzu, wenn sie im Spielstand sind und noch nicht existieren
+                if (parsedCitiesData[stadtName].verbindungen && !STAEDTE[stadtName].verbindungen) {
+                    STAEDTE[stadtName].verbindungen = parsedCitiesData[stadtName].verbindungen;
+                }
             }
         }
         console.log('Stadtstatus geladen.');
@@ -784,6 +815,12 @@
    * @returns {number} Reisezeit in Tagen.
    */
   function berechneReisezeit(startStadt, zielStadt, schiffGeschwindigkeit) {
+      // NEU: Nur erlaubte Verbindungen nutzen
+      if (!STAEDTE[startStadt] || !STAEDTE[startStadt].verbindungen || !STAEDTE[startStadt].verbindungen.includes(zielStadt)) {
+          console.warn(`Keine direkte Seeverbindung von ${startStadt} nach ${zielStadt} definiert.`);
+          return Infinity; // Keine Verbindung
+      }
+
       const entfernung = berechneEntfernung(startStadt, zielStadt);
       // Beispiel: 100 Einheiten Entfernung = 1 Tag bei Standardgeschwindigkeit (1.0)
       const basisTage = Math.max(1, Math.round(entfernung / 100));
@@ -796,6 +833,11 @@
    * @param {string} stadtName - Der Name der ausgewählten Stadt.
    */
   function waehleStadt(stadtName) {
+    // Wenn gerade im Reisemodus, deaktiviere ihn
+    if (reiseModusAktiv) {
+        deaktiviereReiseModus();
+    }
+
     SPIELER_DATEN.aktuelleStadt = stadtName;
     speichereSpielstand();
 
@@ -857,7 +899,7 @@
             if (schiff.waffen > 0) piratenWahrscheinlichkeit -= schiff.waffen * 0.005; // Waffen reduzieren Chance
             piratenWahrscheinlichkeit = Math.max(0, piratenWahrscheinlichkeit); // Minimum 0
 
-            if (Math.random() < piratenWahrscheinlichkeit && !document.getElementById('piratenDialog').style.display === 'block') {
+            if (Math.random() < piratenWahrscheinlichkeit && document.getElementById('piratenDialog').style.display !== 'block') { // Prüfen, ob Dialog nicht schon offen
                 handlePiratenAngriff(schiff);
                 ereignisAufgetreten = true;
             }
@@ -941,9 +983,6 @@
       aktuellesAngriffsSchiff = null; // Reset
       aktualisiereSpielerStatusAnzeige();
       speichereSpielstand();
-      // Spiel automatisch fortsetzen, da der Tag abgeschlossen ist
-      // Nächster Tag wird nicht aufgerufen, da er schon im Timer läuft.
-      // Muss evtl. je nach GameLoop angepasst werden
   }
 
   /**
@@ -977,6 +1016,7 @@
     inhaltDiv.dataset.aktuellesMenue = menuepunkt; // Speichere aktuelles Menü
 
     aktualisiereSpielerStatusAnzeige();
+    deaktiviereReiseModus(); // Immer den Reisemodus verlassen beim Menüwechsel
 
     let htmlInhalt = '';
     const aktuelleStadtDaten = SPIELER_DATEN.aktuelleStadt ? STAEDTE[SPIELER_DATEN.aktuelleStadt] : null;
@@ -1173,17 +1213,9 @@
                   <p>Waffen: ${waffenAnBord} / ${schiffTyp.waffenPlaetze} Plätze</p>
                 </div>
                 <div class="schiff-aktionen">`;
-                // Reise-Optionen nur wenn Schiff vor Anker liegt
+                // Reise-Optionen nur wenn Schiff vor Anker liegt UND sich in der aktuellen Stadt befindet
                 if (schiff.status === 'liegt vor Anker' && schiff.ort === SPIELER_DATEN.aktuelleStadt) {
-                    htmlInhalt += `<select id="zielstadt_${index}" style="margin-bottom: 5px;">`;
-                    for (const stadtName in STAEDTE) {
-                        if (stadtName !== SPIELER_DATEN.aktuelleStadt) {
-                            const reisezeit = berechneReisezeit(SPIELER_DATEN.aktuelleStadt, stadtName, schiffTyp.geschwindigkeit);
-                            htmlInhalt += `<option value="${stadtName}">Nach ${stadtName} (${reisezeit} Tage)</option>`;
-                        }
-                    }
-                    htmlInhalt += `</select>
-                                   <button class="reise-button" onclick="starteReise(${index})">Reise starten</button>`;
+                    htmlInhalt += `<button class="reise-button" onclick="aktiviereReiseModus(${index})">Reise planen</button>`;
                 } else if (schiff.status === 'unterwegs') {
                     htmlInhalt += `<p>Kann nicht bewegt werden, da unterwegs.</p>`;
                 } else {
@@ -1431,39 +1463,130 @@
     zeigeMenue('gebaeude'); // Menü neu laden, um Änderungen zu zeigen
   }
 
-  /**
-   * Startet eine Reise für ein ausgewähltes Schiff.
-   * @param {number} schiffsIndex - Der Index des Schiffes im Array `SPIELER_DATEN.schiffeBesitz`.
-   */
-  function starteReise(schiffsIndex) {
-      const schiff = SPIELER_DATEN.schiffeBesitz[schiffsIndex];
-      const zielstadtSelect = document.getElementById(`zielstadt_${schiffsIndex}`);
-      const zielStadtName = zielstadtSelect.value;
+  // --- NEUE FUNKTIONEN FÜR KARTEN-BASIERTE REISE ---
+  let reiseModusAktiv = false;
+  let schiffIndexFuerReise = -1; // Index des Schiffs, das gerade reisen soll
+  let alterKartenHinweis = "";
 
-      if (!zielStadtName || zielStadtName === schiff.ort) {
-          alert('Bitte wähle eine gültige Zielstadt aus, die nicht dein aktueller Standort ist.');
+  /**
+   * Aktiviert den Reisemodus auf der Karte.
+   * @param {number} index - Der Index des Schiffs, das reisen soll.
+   */
+  function aktiviereReiseModus(index) {
+      reiseModusAktiv = true;
+      schiffIndexFuerReise = index;
+      
+      const kartenHinweisElement = document.getElementById('kartenHinweis');
+      alterKartenHinweis = kartenHinweisElement.textContent; // Alten Hinweis speichern
+      kartenHinweisElement.textContent = `Wähle auf der Karte das Ziel für dein Schiff "${SPIELER_DATEN.schiffeBesitz[index].name}" aus.`;
+      
+      // Markiere nur erlaubte Reiseziele
+      markiereErlaubteReiseziele(SPIELER_DATEN.schiffeBesitz[index].ort);
+
+      // Wechsle zur Übersicht, damit die Karte sichtbar ist
+      zeigeMenue('uebersicht'); 
+  }
+
+  /**
+   * Deaktiviert den Reisemodus und setzt die Kartenmarkierungen zurück.
+   */
+  function deaktiviereReiseModus() {
+      reiseModusAktiv = false;
+      schiffIndexFuerReise = -1;
+      
+      const kartenHinweisElement = document.getElementById('kartenHinweis');
+      kartenHinweisElement.textContent = alterKartenHinweis; // Alten Hinweis wiederherstellen
+
+      // Alle Reiseziel-Markierungen entfernen
+      document.querySelectorAll('.stadt-button.reise-ziel, .stadt-button.active-reise-ziel').forEach(button => {
+          button.classList.remove('reise-ziel');
+          button.classList.remove('active-reise-ziel');
+          button.setAttribute('fill', '#3366cc'); // Standardfarbe
+          button.setAttribute('r', '8'); // Standardgröße
+      });
+      markiereAktuelleStadt(SPIELER_DATEN.aktuelleStadt); // Aktuelle Stadt wieder normal markieren
+  }
+
+  /**
+   * Markiert die Städte auf der Karte, die als Reiseziel ausgewählt werden können.
+   * @param {string} startStadtName - Die Stadt, von der aus die Reise beginnt.
+   */
+  function markiereErlaubteReiseziele(startStadtName) {
+      // Zuerst alle bestehenden Reise-Markierungen entfernen
+      document.querySelectorAll('.stadt-button').forEach(button => {
+          button.classList.remove('reise-ziel');
+          button.classList.remove('active-reise-ziel');
+          button.setAttribute('fill', '#3366cc'); // Standardfarbe
+          button.setAttribute('r', '8'); // Standardgröße
+      });
+
+      const erlaubteZiele = STAEDTE[startStadtName].verbindungen || [];
+      erlaubteZiele.forEach(zielstadtName => {
+          const zielStadtCircle = document.querySelector(`.stadt-button[data-stadt-name="${zielstadtName}"]`);
+          if (zielStadtCircle) {
+              zielStadtCircle.classList.add('reise-ziel');
+              // Füge hier einen Event Listener hinzu, der die Reise startet, wenn geklickt wird
+              // Dieser Listener sollte nur aktiv sein, wenn der Reisemodus aktiv ist
+              // (der generelle Listener wird später überschrieben oder bedingt ausgeführt)
+          }
+      });
+      markiereAktuelleStadt(startStadtName); // Aktuelle Stadt bleibt rot
+  }
+
+
+  /**
+   * Startet eine Reise für ein ausgewähltes Schiff ZUR GEWÄHLTEN ZIELSTADT.
+   * Diese Funktion wird jetzt über den Klick auf die Karte aufgerufen.
+   * @param {string} zielStadtName - Der Name der Zielstadt, die auf der Karte angeklickt wurde.
+   */
+  function starteReiseAufKarte(zielStadtName) {
+      if (!reiseModusAktiv || schiffIndexFuerReise === -1) {
+          // Wenn der Reisemodus nicht aktiv ist, einfach die Stadt auswählen
+          waehleStadt(zielStadtName);
           return;
       }
 
-      if (schiff.status !== 'liegt vor Anker' || schiff.ort !== SPIELER_DATEN.aktuelleStadt) {
-          alert('Dieses Schiff ist nicht in der aktuellen Stadt vor Anker oder bereits unterwegs.');
+      const schiff = SPIELER_DATEN.schiffeBesitz[schiffIndexFuerReise];
+      const startStadtName = schiff.ort;
+
+      if (!STAEDTE[startStadtName].verbindungen || !STAEDTE[startStadtName].verbindungen.includes(zielStadtName)) {
+          alert(`Keine direkte Seeverbindung von ${startStadtName} nach ${zielStadtName}. Wähle eine verbundene Stadt.`);
+          return;
+      }
+
+      if (zielStadtName === startStadtName) {
+          alert('Das Schiff ist bereits in dieser Stadt.');
           return;
       }
 
       const schiffTyp = SCHIFFS_TYPEN.find(s => s.name === schiff.name);
-      const reisezeit = berechneReisezeit(schiff.ort, zielStadtName, schiffTyp.geschwindigkeit);
+      const reisezeit = berechneReisezeit(startStadtName, zielStadtName, schiffTyp.geschwindigkeit);
 
-      schiff.status = 'unterwegs';
-      schiff.ziel = zielStadtName;
-      schiff.reiseEndTag = SPIELER_DATEN.tag + reisezeit;
+      const bestaetigung = confirm(
+          `${schiff.name} von ${startStadtName} nach ${zielStadtName} schicken?\n` +
+          `Dauer: ${reisezeit} Tage (Ankunft Tag ${SPIELER_DATEN.tag + reisezeit}).`
+      );
 
-      alert(`${schiff.name} ist auf dem Weg nach ${zielStadtName}. Ankunft in ${reisezeit} Tagen (Tag ${schiff.reiseEndTag}).`);
-      speichereSpielstand();
-      // Automatisch Tage vorspulen, um die Reise zu simulieren
-      for (let i = 0; i < reisezeit; i++) {
-          naechsterTag();
+      if (bestaetigung) {
+          schiff.status = 'unterwegs';
+          schiff.ziel = zielStadtName;
+          schiff.reiseEndTag = SPIELER_DATEN.tag + reisezeit;
+
+          alert(`${schiff.name} ist auf dem Weg nach ${zielStadtName}!`);
+          speichereSpielstand();
+          deaktiviereReiseModus(); // Reisemodus verlassen nach Start der Reise
+
+          // Automatisch Tage vorspulen, um die Reise zu simulieren
+          // (optional, je nachdem, wie du den Spielfluss gestalten willst)
+          for (let i = 0; i < reisezeit; i++) {
+              naechsterTag();
+          }
+          zeigeMenue('schiffe'); // Aktualisiere das Schiffsmenü
+      } else {
+          // Wenn Reise abgebrochen wird, Reisemodus verlassen
+          deaktiviereReiseModus();
+          zeigeMenue('schiffe'); // Zurück zum Schiffsmenü
       }
-      zeigeMenue('schiffe'); // Aktualisiere das Schiffsmenü
   }
 
 
@@ -1518,6 +1641,7 @@
     if (currentMarkedCity) {
         currentMarkedCity.setAttribute('fill', '#3366cc'); // Setzt alte Farbe zurück
         currentMarkedCity.setAttribute('r', '8'); // Setzt alte Größe zurück
+        currentMarkedCity.classList.remove('active-stadt'); // Optional: Klasse entfernen
     }
 
     if (stadtName) {
@@ -1525,6 +1649,7 @@
         if (neueStadtCircle) {
             neueStadtCircle.setAttribute('fill', '#ff0000'); // Neue Farbe
             neueStadtCircle.setAttribute('r', '12'); // Neue Größe
+            neueStadtCircle.classList.add('active-stadt'); // Optional: Klasse hinzufügen
             currentMarkedCity = neueStadtCircle;
         }
     } else {
@@ -1567,7 +1692,14 @@
     // Event Listener für die Stadtkreise
     document.querySelectorAll('.stadt-button').forEach(button => {
       button.addEventListener('click', (event) => {
-        waehleStadt(event.target.dataset.stadtName);
+        const geklickteStadt = event.target.dataset.stadtName;
+        if (reiseModusAktiv) {
+            // Wenn im Reisemodus, versuche die Reise zu starten
+            starteReiseAufKarte(geklickteStadt);
+        } else {
+            // Ansonsten, wähle die Stadt als aktuelle Stadt
+            waehleStadt(geklickteStadt);
+        }
       });
     });
 
